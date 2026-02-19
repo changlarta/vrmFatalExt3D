@@ -260,7 +260,7 @@ public class mainSideBar : MonoBehaviour
 
     private int CalculateNextLvCost(int lv)
     {
-        return lv * lv * 2;
+        return (1 + lv) * (1 + lv) / 2;
     }
 
     public void SetItemLv(int newItemLv)
