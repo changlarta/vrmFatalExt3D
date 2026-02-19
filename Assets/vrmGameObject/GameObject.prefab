@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6935845340184212374
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5002083390088018671}
+  - component: {fileID: 4264495128993691017}
+  - component: {fileID: 3222196200656591268}
+  - component: {fileID: 3414723873971044381}
+  - component: {fileID: 7701885932245229171}
+  m_Layer: 8
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5002083390088018671
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6935845340184212374}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 12}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!114 &4264495128993691017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6935845340184212374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62e5ec00617910046b127382ea988039, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bodyPrefabNormal: {fileID: 919132149155446097, guid: 327f76ba322dc5246892878808eba612, type: 3}
+  bodyPrefabCooking: {fileID: 919132149155446097, guid: 6c3aca3d018f99c40a3a35c5e58fee2c, type: 3}
+  bodyPrefabSchool: {fileID: 919132149155446097, guid: 2e65156c84711f74b8935aaf31070e18, type: 3}
+  bodyPrefabSifuku: {fileID: 919132149155446097, guid: 16b6ce4c093598344b2e8c65d10fdb3f, type: 3}
+  bodyPrefabTrack: {fileID: 919132149155446097, guid: 1cbb7bbbb8661fc4b9276ef829116665, type: 3}
+  face3Prefab: {fileID: 3643108311881564986, guid: dcb966e5aa4c6ca469c32d06d8be0be9, type: 3}
+  skinTex: {fileID: 2800000, guid: a14d2271eb24d5b448e1168cec0b5da0, type: 3}
+  clothTexNormal: {fileID: 2800000, guid: 0da8a4f31d6ed2441ad3daf42317a9eb, type: 3}
+  clothTexNormalBikiniBlue: {fileID: 2800000, guid: a1f2cd49f7808994c99eb9065ff7cd93, type: 3}
+  clothTexNormalBikiniPink: {fileID: 2800000, guid: 3e71ead5f5670224293a0ea9325dab83, type: 3}
+  clothTexNormalSwim: {fileID: 2800000, guid: 1707002bd7021884899954461f9aaa1b, type: 3}
+  clothTexCookingAndSifuku: {fileID: 2800000, guid: 0ff10cc9b6364db4abffd110c02acb0b, type: 3}
+  clothTexSchool: {fileID: 2800000, guid: 5a2dbea4f589a8d47b32422a9b6a2f6c, type: 3}
+  transparentClothTex: {fileID: 2800000, guid: 0ff10cc9b6364db4abffd110c02acb0b, type: 3}
+  face3Tex: {fileID: 2800000, guid: fa78de2f27ad290418ce1d6447ec7fb9, type: 3}
+  face3Tex2: {fileID: 2800000, guid: 9839549bbb7d6cf4ea46bb6543498ae6, type: 3}
+  face3Key: 70
+  bodyKey: 0
+  bustKey: 15
+  height: 0
+  vrmHeadBoneName: J_Bip_C_Head
+  bodyVariant: 0
+  currentAnimationKey: idle
+  expressionPreset: 0
+  eyeContact: 1
+--- !u!114 &3222196200656591268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6935845340184212374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21ab64744d007dc4a8fa6be64c14b800, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vrmTo: {fileID: 4264495128993691017}
+  eventsJson: {fileID: 4900000, guid: 9fec8c6a36949204d8223a07c6a4901a, type: 3}
+  debugEventKey: 
+--- !u!114 &3414723873971044381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6935845340184212374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc1d0e442260ade4dae4940782131fae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vrmTo: {fileID: 4264495128993691017}
+  transitionSeconds: 0.3
+  enableBlink: 1
+  enableMouthLoop: 0
+  debugAllShapesOverride: 0
+  allShapeSliders: []
+--- !u!114 &7701885932245229171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6935845340184212374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6edc54552358f674cabd9ade75cc6d64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tposeClip: {fileID: 7400000, guid: 41f2852ffbbb0e840b638ef0d1926920, type: 2}
+  animations:
+  - key: idle
+    clip: {fileID: 7400000, guid: 45d740a0ab548604cb573b10dce18d33, type: 2}
+    referencePoseMode: 1
+    useIK: 1
+  - key: jogging
+    clip: {fileID: 7400000, guid: 5f2a93b22a7726e4385c4b28fe5cb7a4, type: 2}
+    referencePoseMode: 1
+    useIK: 0
+  - key: jumping_jacks
+    clip: {fileID: 7400000, guid: 6772303ce79a91e4185835fb521e71b3, type: 2}
+    referencePoseMode: 1
+    useIK: 1
+  - key: idle2
+    clip: {fileID: 7400000, guid: 419a24f0b5dc71f4388689b99aa75542, type: 2}
+    referencePoseMode: 1
+    useIK: 0
+  - key: pushup
+    clip: {fileID: 7400000, guid: 280d6f8dae69216429cd1607a2c44bcf, type: 2}
+    referencePoseMode: 0
+    useIK: 0
+  - key: situps
+    clip: {fileID: 7400000, guid: 939baa96ebd8651488d2c1e7734c2a46, type: 2}
+    referencePoseMode: 0
+    useIK: 1
+  - key: squat
+    clip: {fileID: 7400000, guid: a258b23ffb9a4024887c3324d4aa6381, type: 2}
+    referencePoseMode: 1
+    useIK: 1
+  - key: walk
+    clip: {fileID: 7400000, guid: 735a43886ffce304ea0da181748c1f76, type: 2}
+    referencePoseMode: 1
+    useIK: 0
+  - key: burpee
+    clip: {fileID: 7400000, guid: ebddd40d44f19044ea5973ffe75a4424, type: 2}
+    referencePoseMode: 2
+    useIK: 1
+  - key: tenna
+    clip: {fileID: 7400000, guid: 3c40db871bcec414d8033758f0a4b655, type: 2}
+    referencePoseMode: 1
+    useIK: 1
+  - key: kiss
+    clip: {fileID: 7400000, guid: 1eba756c6e622fe4097ded7bc69b9faf, type: 2}
+    referencePoseMode: 1
+    useIK: 0
+  - key: test
+    clip: {fileID: 7400000, guid: 41f2852ffbbb0e840b638ef0d1926920, type: 2}
+    referencePoseMode: 1
+    useIK: 0
+  _transitionDuration: 0.5
+  _contactHeight: 0.08
+  _legShrinkFactor: 0.8

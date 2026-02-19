@@ -1,0 +1,315 @@
+{
+  "events": [
+    {
+      "eventKey": "1",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral",
+      "eyeContact":true,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "2",
+      "currentAnimationKey": "jogging",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "moving_walk1",
+      "currentAnimationKey": "walk",
+      "expressionPreset": "Neutral",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "moving_walk2",
+      "currentAnimationKey": "walk",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": true,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "moving_jogging1",
+      "currentAnimationKey": "jogging",
+      "expressionPreset": "Neutral",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },     
+    {
+      "eventKey": "moving_jogging2",
+      "currentAnimationKey": "jogging",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": true,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "moving_fly1",
+      "currentAnimationKey": "fly",
+      "expressionPreset": "Neutral",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },     
+    {
+      "eventKey": "moving_fly2",
+      "currentAnimationKey": "fly",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": true,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "moving_idol1",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },     
+    {
+      "eventKey": "moving_idol2",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral3",
+      "eyeContact": false,
+      "enableBlink": true,
+      "showBlush": true,
+      "enableMouthLoop": false
+    },     
+    {
+      "eventKey": "idle",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral",
+      "eyeContact":true,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "idle2",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral2",
+      "eyeContact":true,
+      "enableBlink": true,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "idle3",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Neutral3",
+      "eyeContact":true,
+      "enableBlink": true,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "blush_tap_face",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "blush_tap_face",
+      "eyeContact": true,
+      "enableBlink": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "blush_swaip_face",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "blush_swaip_face",
+      "eyeContact": true,
+      "enableBlink": true,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "blush_tap",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "blush_tap",
+      "eyeContact": true,
+      "enableBlink": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "blush_swaip",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "blush_swaip",
+      "eyeContact": true,
+      "enableBlink": true,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "shock",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Shock",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+
+      "eventKey": "shock2",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Shock2",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "shock3",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "Shock3",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "foodWait1",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodWait1",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "foodWait2",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodWait2",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },    
+    {
+      "eventKey": "foodWait3",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodWait3",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    },
+    {
+      "eventKey": "foodEating1",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodEating1",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "foodEating2",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodEating2",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "foodEating3",
+      "currentAnimationKey": "idle",
+      "expressionPreset": "FoodEating3",
+      "eyeContact": true,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "workOut_walk",
+      "currentAnimationKey": "walk",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_jogging",
+      "currentAnimationKey": "jogging",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_jumping_jacks",
+      "currentAnimationKey": "jumping_jacks",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_pushup",
+      "currentAnimationKey": "pushup",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_situps",
+      "currentAnimationKey": "situps",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_squat",
+      "currentAnimationKey": "squat",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_burpee",
+      "currentAnimationKey": "burpee",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },    
+    {
+      "eventKey": "workOut_tenna",
+      "currentAnimationKey": "tenna",
+      "expressionPreset": "Tired",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": true
+    },
+    {
+      "eventKey": "tpose",
+      "currentAnimationKey": "tpose",
+      "expressionPreset": "Neutral",
+      "eyeContact": false,
+      "enableBlink": false,
+      "showBlush": false,
+      "enableMouthLoop": false
+    }
+  ]
+}

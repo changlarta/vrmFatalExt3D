@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>vrmFatalExt3D</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #111;
+      overflow: hidden;
+    }
+
+    /* モバイルのアドレスバー伸縮を考慮（対応ブラウザでは100dvhを使う） */
+    #wrap {
+      height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    @supports (height: 100dvh) {
+      #wrap { height: 100dvh; }
+    }
+
+    #unity-canvas {
+      /* 16:9 を維持しつつ、画面に収まる最大サイズにする */
+      width: min(100vw, calc(100dvh * 16 / 9));
+      height: min(100dvh, calc(100vw * 9 / 16));
+
+      /* 100dvh 未対応ブラウザ向けフォールバック */
+      max-width: min(100vw, calc(100vh * 16 / 9));
+      max-height: min(100vh, calc(100vw * 9 / 16));
+
+      background: #000;
+      outline: none;
+      display: block;
+      touch-action: none; /* 任意: モバイルの意図しないスクロール/ジェスチャ抑止 */
+    }
+
+    #err {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      color: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      pointer-events: none;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrap">
+    <canvas id="unity-canvas" width="960" height="540" tabindex="-1"></canvas>
+  </div>
+
+  <div id="err"></div>
+
+  <script>
+    const canvas = document.getElementById("unity-canvas");
+    const err = document.getElementById("err");
+
+    function showError(message) {
+      err.textContent = message;
+      console.error(message);
+    }
+
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/3d_wg_build_web.loader.js";
+    const config = {
+      arguments: [],
+      dataUrl: buildUrl + "/3d_wg_build_web.data.gz",
+      frameworkUrl: buildUrl + "/3d_wg_build_web.framework.js.gz",
+      codeUrl: buildUrl + "/3d_wg_build_web.wasm.gz",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "vrmFatalExt3D",
+      productVersion: "0.1.0",
+      devicePixelRatio: 1,
+      matchWebGLToCanvasSize: false,
+    };
+
+    const script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      // progress コールバックも不要なら null にできる
+      createUnityInstance(canvas, config, null).catch((message) => {
+        showError(message);
+        alert(message);
+      });
+    };
+    script.onerror = () => showError("Failed to load Unity loader: " + loaderUrl);
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+{
+  "id": "en",
+  "name": "english",
+  "entries": [
+    { "key": "title", "value": "fattening Simulator" },
+    { "key": "titleGameStartButton", "value": "Start" },
+
+    { "key": "weighScaleLv1", "value": "gaunt" },
+    { "key": "weighScaleLv2", "value": "skinny" },
+    { "key": "weighScaleLv3", "value": "normal" },
+    { "key": "weighScaleLv4", "value": "soft" },
+    { "key": "weighScaleLv5", "value": "chubby" },
+    { "key": "weighScaleLv6", "value": "plump" },
+    { "key": "weighScaleLv7", "value": "BBW" },
+    { "key": "weighScaleLv8", "value": "SSBBW" },
+    { "key": "weighScaleLv9", "value": "USSBBW" },
+    { "key": "weighScaleLv10", "value": "MAX" },
+
+    { "key": "previewButtonText", "value": "comparison" },
+    { "key": "workButtonText", "value": "push" },
+    { "key": "coinLvText0", "value": "$ / Tap :Lv" },
+    { "key": "shopItemLevelTitle", "value": "item:Lv {0} / {1}" },
+    { "key": "shopWorkoutLevelTitle", "value": "exercise:Lv {0} / {1}" },
+
+    { "key": "shopMax", "value": "max" },
+    { "key": "shopClothSectionTitle", "value": "Clothes" },
+    { "key": "shopBackgroundSectionTitle", "value": "Background" },
+    { "key": "shopBgmSectionTitle", "value": "Music" },
+    { "key": "shopOpenDevButtonTitle", "value": "Unlock debTool" },
+    { "key": "audioSettingText", "value": "Volume" },
+    { "key": "languageSettingText", "value": "Language" },
+    { "key": "scaleSettingText", "value": "Scale units" },
+    { "key": "steamSettingText", "value": "Heater" },
+    { "key": "steamSettingTextOn", "value": "On" },
+    { "key": "steamSettingTextOff", "value": "Off" },
+    { "key": "fullScreenConfigTitle", "value": "Fullscreen Mode" },
+
+    { "key": "yjsConfigTitle", "value": "Secret Guest Mode (Legendary Super Star)" },
+    { "key": "yjsConfigOn", "value": "On" },
+    { "key": "yjsConfigOff", "value": "Off" },
+    { "key": "yjsConfigDialogDescription", "value": "Secret cameo unlocked!\nEnable this mode?" },
+    { "key": "yjsConfigDialogCancel", "value": "Cancel" },
+    { "key": "yjsConfigDialogYes", "value": "Summon" },
+
+    { "key": "workout1name", "value": "Walking" },
+    { "key": "workout2name", "value": "Jogging" },
+    { "key": "workout3name", "value": "Sit-ups" },
+    { "key": "workout4name", "value": "Squats" },
+    { "key": "workout5name", "value": "Jumping Jacks" },
+    { "key": "workout6name", "value": "Tenna" },
+    { "key": "workout7name", "value": "Burpee Jumps" },
+
+    { "key": "giftToast1", "value": "Meh!\nYou got {0}P!" },
+    { "key": "giftToast2", "value": "Small win!\nYou got {0}P!" },
+    { "key": "giftToast3", "value": "Win!\nYou got {0}P!" },
+    { "key": "giftToast4", "value": "Jackpot!\nYou got {0}P!" },
+
+    { "key": "closeDialogDescription", "value": "Quit the game?" },
+    { "key": "closeDialogCancel", "value": "Cancel" },
+    { "key": "closeDialogYes", "value": "Yes" },
+
+    { "key": "settingSelectVRM", "value": "Select\nfrom VRM file" },
+    { "key": "settingStart", "value": "Start" },
+    { "key": "settingSelectDescription", "value": "Choose your character" },
+
+    { "key": "PagedPanelNext", "value": "Next" },
+    { "key": "PagedPanelClose", "value": "Close" },
+    { "key": "PagedPanelPage1", "value": "Like this, you can choose your own custom character." },
+    { "key": "PagedPanelPage2", "value": "Create a character in [VRoidStudio](https://vroid.com/studio) and bring it in." },
+
+    { "key": "item1name", "value": "Candy" },
+    { "key": "item1description", "value": "A round sugar candy you can eat in one bite." },
+    { "key": "item2name", "value": "Potato Chips" },
+    { "key": "item2description", "value": "Thinly sliced potatoes, fried in hot oil and salted.\nNice and crunchy." },
+    { "key": "item3name", "value": "Donut" },
+    { "key": "item3description", "value": "Something done to flour.\nCoated with tons of sugar and butter—an over-the-top, indulgent taste." },
+    { "key": "item4name", "value": "Strawberry Donut" },
+    { "key": "item4description", "value": "Something done to flour, now with strawberry flavor.\nTasty enough to count as breakfast." },
+    { "key": "item5name", "value": "Pudding" },
+    { "key": "item5description", "value": "A lovely sweet, soft jelly-like dessert.\nServed with caramel sauce." },
+    { "key": "item6name", "value": "Pancakes" },
+    { "key": "item6description", "value": "Fluffy pancakes with the aroma of honey and butter.\nThey sparkle depending on the angle you look from." },
+    { "key": "item7name", "value": "Cake Slice" },
+    { "key": "item7description", "value": "A slice of cake decorated with whipped cream.\nMade with nice strawberries—absolutely delicious." },
+    { "key": "item8name", "value": "Whole Cake" },
+    { "key": "item8description", "value": "A cake collective that can't be neatly divided.\nIf you finish it all, you'll be hit with the calories of eight cake slices—and even more satisfaction." },
+    { "key": "item9name", "value": "Cola" },
+    { "key": "item9description", "value": "A drink that erupts if you drop Mentos in it.\nIf it has gone flat, it might not erupt.\n" },
+    { "key": "item10name", "value": "French Fries" },
+    { "key": "item10description", "value": "Potatoes cut into sticks and fried.\nApparently this is an even bigger reason you gain weight than burgers." },
+    { "key": "item11name", "value": "Hamburger" },
+    { "key": "item11description", "value": "A delicious hamburger." },
+    { "key": "item12name", "value": "Pizza" },
+    { "key": "item12description", "value": "The symbol of getting fat.\nLoaded with cheese, and the calorie count is shocking." },
+    { "key": "item13name", "value": "Ice Pop" },
+    { "key": "item13description", "value": "Cold." },
+    { "key": "item14name", "value": "Melon Soda" },
+    { "key": "item14description", "value": "Melon-flavored soda with a cherry on top." },
+    { "key": "item15name", "value": "Soft Serve" },
+    { "key": "item15description", "value": "Very cold. Because it's cold, it's harder to taste, and you lose track of how much sugar you're consuming." },
+    { "key": "item16name", "value": "Twin Soft Serve" },
+    { "key": "item16description", "value": "The evolved form of soft serve." },
+    { "key": "item17name", "value": "Chocolate" },
+    { "key": "item17description", "value": "Sweet and smells great." },
+    { "key": "item18name", "value": "Tapioca" },
+    { "key": "item18description", "value": "A sweet, cute drink.\nIf there's nowhere to toss the cup, just leave it somewhere—somehow it disappears later." },
+    { "key": "item19name", "value": "Sweet Bun" },
+    { "key": "item19description", "value": "It's basically a snack, not a staple food, but if you mistakenly make it a meal, you can gain weight easily from sugar overload." },
+    { "key": "item20name", "value": "Kofuho Bread" },
+    { "key": "item20description", "value": "Kofuho bread is—full of kemop pan—kuko pan? soy.\nO?????????sh?ta\n" },
+    { "key": "item21name", "value": "Cup Noodles" },
+    { "key": "item21description", "value": "A complete meal that's quick, cheap, and easy to eat.\n" },
+    { "key": "item22name", "value": "Mayonnaise" },
+    { "key": "item22description", "value": "You're not supposed to eat this straight!\nIt has the effect of making it easier to gain fat on your face." },
+    { "key": "item23name", "value": "Hot Dog" },
+    { "key": "item23description", "value": "Good food." },
+    { "key": "item24name", "value": "Karaage" },
+    { "key": "item24description", "value": "Japanese-style bite-sized fried chicken.\nyakitori." },
+    { "key": "item25name", "value": "Takoyaki" },
+    { "key": "item25description", "value": "A Japanese street snack: batter balls usually filled with octopus (allegedly intelligent).\nSometimes there's no octopus inside." },
+    { "key": "item26name", "value": "Jelly Donut" },
+    { "key": "item26description", "value": "Rice served in a form other than on a plate.\nThis time it's specially wrapped in seaweed." },
+    { "key": "item27name", "value": "TV dinner" },
+    { "key": "item27description", "value": "A store-bought boxed meal. Sadly, the tray is deceptively shaped, so it looks like more than it is.\nAs a result, it barely increases your fullness." },
+    { "key": "item28name", "value": "Meat Sauce Pasta" },
+    { "key": "item28description", "value": "An Italian version of somen—one of the pasta types that specifically comes with meat sauce.\nThis time it also has some kind of greens on top." },
+    { "key": "item29name", "value": "Steak" },
+    { "key": "item29description", "value": "Animal meat cut, shaped, and placed on a plate.\nPeople say it's beef or pork, but sometimes it might even be chicken." },
+    { "key": "item30name", "value": "Katsu Don" },
+    { "key": "item30description", "value": "People say it's good to eat on days you want to win, but it's tasty, so it's fine any day.\nIt boosts fullness a lot—super satisfying." },
+    { "key": "item31name", "value": "Omurice" },
+    { "key": "item31description", "value": "An alternate version of rice with egg." },
+    { "key": "item32name", "value": "Jiro-Style Ramen" },
+    { "key": "item32description", "value": "A massive portion.\nUnhealthy, but delicious with lots of salt and oil.\nIt takes a very long time to eat because there's so much." },
+    { "key": "item33name", "value": "Monster Energy" },
+    { "key": "item33description", "value": "Tear into a can of the meanest energy drink on the planet—Monster Energy. It packs a powerful punch but goes down smooth with its easy-drinking flavor. It’s the ideal combo of the right ingredients in the right proportions to deliver the big bad buzz only Monster can. Unleash the Beast!" },
+    { "key": "item34name", "value": "Sparkling Water" },
+    { "key": "item34description", "value": "Water infused with carbon dioxide.\nNo calories, but it can still make you feel full." },
+    { "key": "item35name", "value": "Milk" },
+    { "key": "item35description", "value": "A liquid you can obtain from cows.\nHighly nutritious, and it has the effect of making your chest bigger." },
+    { "key": "item36name", "value": "Reverse Milk" },
+    { "key": "item36description", "value": "The opposite of milk—a liquid you can't obtain from cows.\nSince it's the opposite of milk, of course it makes your chest smaller." },
+    { "key": "item37name", "value": "Chuhai" },
+    { "key": "item37description", "value": "It says it's lemon-flavored.\nGets you drunk on the cheap." },
+    { "key": "item38name", "value": "Whisky" },
+    { "key": "item38description", "value": "A rich aroma of dried fruit and chocolate. The mizunara oak and incense-like notes melt into the finish, lingering long and deep." },
+    { "key": "item39name", "value": "Carrot" },
+    { "key": "item39description", "value": "A low-calorie vegetable that's tasty.\nIt has the effect of making it harder to gain fat on your face." },
+    { "key": "item40name", "value": "Apple" },
+    { "key": "item40description", "value": "A fruit that feels like the standard, classic fruit." },
+    { "key": "item41name", "value": "Golden Apple" },
+    { "key": "item41description", "value": "A gold-colored apple with value." },
+    { "key": "item42name", "value": "Salad" },
+    { "key": "item42description", "value": "Vegetables that taste good, so you actually want to eat them. It has some weird veggies in it, so it's healthy too." },
+    { "key": "item43name", "value": "Stomach Medicine" },
+    { "key": "item43description", "value": "Can drastically reduce fullness.\nDue to the game's rules, there's no particular benefit to lowering fullness." },
+    { "key": "item44name", "value": "Weight-Loss Pills" },
+    { "key": "item44description", "value": "Incredibly, taking this makes you instantly lose weight.\nStraight-up illegal." },
+    { "key": "item45name", "value": "Uranium Sugar" },
+    { "key": "item45description", "value": "A mysterious energy lump—one piece contains 50 years' worth of calories for an adult man.\nIt feels like it should be bad for you, but some people sometimes whisper a theory that maybe it's not actually that bad." },
+    { "key": "item46name", "value": "Tube" },
+    { "key": "item46description", "value": "The kind of thing used to make foie gras." },
+    { "key": "unpurchasedText", "value": "Not purchased" },
+
+    { "key": "cat_Start", "value": "…?\f……?\fUh… this thumbnail looks a little different…?\fI-it's just your imagination, okay…?\fMeow~" },
+
+    { "key": "cat_WeightSpeech_0", "value": "Weight loss success.\fGuess I can eat even more now." },
+    { "key": "cat_WeightSpeech_5", "value": "My body feels so light." },
+    { "key": "cat_WeightSpeech_10", "value": "Ugh..." },
+    { "key": "cat_WeightSpeech_20", "value": "Everything tastes good." },
+    { "key": "cat_WeightSpeech_25", "value": "Whoa...\fSomehow I ended up over 100 kg...!\f...\f......\f(...What do I do...)" },
+    { "key": "cat_WeightSpeech_28", "value": "It's so stuffy..." },
+    { "key": "cat_WeightSpeech_30", "value": "My stomach hurts...\fNo, I'm not full or anything.\fMy clothes are just getting a little tight." },
+    { "key": "cat_WeightSpeech_33", "value": "Hey, you're banned from giving me food.\fIf it's there, I'll eat it." },
+    { "key": "cat_WeightSpeech_35", "value": "(Ugh... this is seriously bad.)\f(My upper arms and my chin are bad too.)" },
+    { "key": "cat_WeightSpeech_38", "value": "It's so stuffy..." },
+    { "key": "cat_WeightSpeech_40", "value": "I'm hungry even though I'm still eating." },
+    { "key": "cat_WeightSpeech_43", "value": "Meow~" },
+    { "key": "cat_WeightSpeech_45", "value": "If I keep eating like this...\fIsn't this bad—like, no matter how you look at it...?" },
+    { "key": "cat_WeightSpeech_48", "value": "If I'm fat and still cute, I guess it's fine." },
+    { "key": "cat_WeightSpeech_50", "value": "Once you're past 100 kg, 100 and 120 don't feel that different." },
+    { "key": "cat_WeightSpeech_60", "value": "This counts as 'chubby', right?\fNo doubt about it." },
+    { "key": "cat_WeightSpeech_70", "value": "Hoo... heavy...\fIf you do everything for me, I guess it doesn't matter if I gain weight.\fUm... you won't abandon me, right?" },
+    { "key": "cat_WeightSpeech_80", "value": "Ugh... huff..." },
+    { "key": "cat_WeightSpeech_90", "value": "What am I supposed to do with all this extra fat...?" },
+    { "key": "cat_WeightSpeech_100", "value": "Welp, I guess that's that.\fTime for dinner, debu~" },
+
+    { "key": "cat_FoodSpeech_1", "value": "Candy.\f*munch munch*" },
+    { "key": "cat_FoodSpeech_2", "value": "Mmm!\fSo greasy—perfect." },
+    { "key": "cat_FoodSpeech_3", "value": "Sweet happiness.\fThe gritty feel of that lump of sugar is so nice." },
+    { "key": "cat_FoodSpeech_4", "value": "Strawberry flavor!\f(Pretty normal for a new item, huh.)" },
+    { "key": "cat_FoodSpeech_5", "value": "Jiggly, soft, and so good~!\fJiggly like my belly.\f...?" },
+    { "key": "cat_FoodSpeech_6", "value": "So gooood~!" },
+    { "key": "cat_FoodSpeech_7", "value": "My brain is melting!\nOne isn't nearly enough." },
+    { "key": "cat_FoodSpeech_8", "value": "Huh!? I can eat all of this!?\fYay!" },
+    { "key": "cat_FoodSpeech_9", "value": "(*burp*)" },
+    { "key": "cat_FoodSpeech_10", "value": "It's good whether it's fresh-fried or all soggy." },
+    { "key": "cat_FoodSpeech_11", "value": "I could make this my staple food.\fI'm full." },
+    { "key": "cat_FoodSpeech_12", "value": "It's cheat day, so there's no problem at all.\f*munch munch*" },
+    { "key": "cat_FoodSpeech_13", "value": "Brain freeze!\fAnother one!" },
+    { "key": "cat_FoodSpeech_14", "value": "Soda and vanilla ice cream go way too well together.\fIs this a god-tier combo?" },
+    { "key": "cat_FoodSpeech_15", "value": "Soft serve.\fCold stuff makes me feel like I lose weight." },
+    { "key": "cat_FoodSpeech_16", "value": "Hnng!\nWhat flavor is this!?" },
+    { "key": "cat_FoodSpeech_17", "value": "My hands are getting sticky!\fYou're wondering if it's okay for a cat to eat chocolate...?\fI'm biologically closer to humans, so it's fine." },
+    { "key": "cat_FoodSpeech_18", "value": "That poppy texture never gets boring.\fMilk goes with everything.\fWhat even is tapioca? A plant?" },
+    { "key": "cat_FoodSpeech_19", "value": "Six pieces is pretty satisfying.\f(Eats it in one bite.)" },
+    { "key": "cat_FoodSpeech_20", "value": "What is this supposed to be?" },
+    { "key": "cat_FoodSpeech_21", "value": "Let's drink it down to the last drop." },
+    { "key": "cat_FoodSpeech_22", "value": "I'm done.\fI'm doooone!!" },
+    { "key": "cat_FoodSpeech_23", "value": "Perfect for a snack.\f(Wait... how many snacks have I had today...?)" },
+    { "key": "cat_FoodSpeech_24", "value": "Fresh-made karaage is good karaage." },
+    { "key": "cat_FoodSpeech_25", "value": "Hot!\fMeow meow!" },
+    { "key": "cat_FoodSpeech_26", "value": "Forget the cravings—embrace them!\fCarbs are the best!!" },
+    { "key": "cat_FoodSpeech_27", "value": "There's only food in the part you can see,\fIs this... magic?" },
+    { "key": "cat_FoodSpeech_28", "value": "Noodles." },
+    { "key": "cat_FoodSpeech_29", "value": "Meat.\fProtein makes me feel alive." },
+    { "key": "cat_FoodSpeech_30", "value": "I'll win.\fI'll beat myself and stop eating from tomorrow.\fProbably." },
+    { "key": "cat_FoodSpeech_31", "value": "Be delicious~" },
+    { "key": "cat_FoodSpeech_32", "value": "I don't really get it, so make everything extra, please!\fIt wasn't nearly enough, so I want another bowl." },
+    { "key": "cat_FoodSpeech_33", "value": "I can work 24 hours a day." },
+    { "key": "cat_FoodSpeech_34", "value": "Nice kick." },
+    { "key": "cat_FoodSpeech_35", "value": "Gulp gulp...\fAhh." },
+    { "key": "cat_FoodSpeech_36", "value": "Is this okay to drink...?" },
+    { "key": "cat_FoodSpeech_37", "value": "I'm chugging it.\fGulp\fGulp\fUrrk" },
+    { "key": "cat_FoodSpeech_38", "value": "Feels like it's better than the regular one...?" },
+    { "key": "cat_FoodSpeech_39", "value": "You eat this raw...?" },
+    { "key": "cat_FoodSpeech_40", "value": "Tasty and healthy? That's the best." },
+    { "key": "cat_FoodSpeech_41", "value": "It's shining...\fWhoa." },
+    { "key": "cat_FoodSpeech_42", "value": "Healthy—nice." },
+    { "key": "cat_FoodSpeech_43", "value": "I don't really know, but it feels like it's working~" },
+    { "key": "cat_FoodSpeech_44", "value": "Ugh... the world looks rainbow-colored." },
+    { "key": "cat_FoodSpeech_45", "value": "Kya... n-no...!\f" },
+    { "key": "cat_FoodSpeech_46", "value": "Are you sane?" },
+
+    {
+    "key": "hypnosis_Start",
+    "value": "Having been brainwashed by a hypnosis app, I became—pathetically—incapable of disobeying your commands.\fDeeper, and deeper…\fSunk into a profound conditioning.\fAh… how pitiable."
+    },
+
+    { "key": "hypnosis_WeightSpeech_3", "value": "I can’t discern the purpose. It’s incomprehensible—nothing but madness." },
+    { "key": "hypnosis_WeightSpeech_5", "value": "…You still intend to keep feeding me?" },
+    {
+      "key": "hypnosis_WeightSpeech_8",
+      "value": "(Her gaze moved back and forth between the plate and you; she narrowed her eyes, as if weighing the situation in silence.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_10",
+      "value": "There’s fat on my stomach like a flotation ring…\fSo I really am fat.\f(Holding her now-graspable side, she stared at it with undisguised distaste.)"
+    },
+    { "key": "hypnosis_WeightSpeech_13", "value": "This is more than enough." },
+    {
+      "key": "hypnosis_WeightSpeech_15",
+      "value": "I’m starting to lose any sense of satiety.\f(Cradling the flesh of her belly, she tilted her head, genuinely perplexed.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_18",
+      "value": "(She looked down toward her feet; the color drained from her face.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_20",
+      "value": "Ah… damn it…!\f(Biting her lip, she let her throat tighten, swallowing the helpless frustration she couldn’t put anywhere.)"
+    },
+    { "key": "hypnosis_WeightSpeech_23", "value": "Munch… munch…" },
+    { "key": "hypnosis_WeightSpeech_25", "value": "…" },
+    { "key": "hypnosis_WeightSpeech_28", "value": "Hey—if we’re doing this anyway, I want cake." },
+    {
+      "key": "hypnosis_WeightSpeech_30",
+      "value": "…\f(She slid her eyes sideways and stole a quick look at her swollen hips.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_33",
+      "value": "My body feels heavy.\f(She rocked herself slightly, confirming the fact that fat now filled her from head to toe.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_35",
+      "value": "It’s hot…\f(The fat had become a layer of insulation, obstructing the body’s ordinary flow of heat.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_38",
+      "value": "This is the worst…\f(She cupped the flab of her upper arms—hanging like loose sleeves—and made it bounce in her palm.)\f(Then she took her own wrist right before her eyes, checking that it had grown thick and soft enough to satisfy even her doubt.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_40",
+      "value": "Even here…\f(Reaching a hand around her back, she tested the weight of the fat clinging from her shoulder blades down toward her armpits.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_45",
+      "value": "Aaaagh!!\fEnough!!\fHaa…\fI really am pathetic."
+    },
+    {
+      "key": "hypnosis_WeightSpeech_48",
+      "value": "I can’t understand the point.\fIncomprehensible—pure madness.\f(She pressed a fingertip under her slackened jawline, verifying that even her face had thoroughly padded out.)\f(When she let go, the doubled flesh of her chin sagged and slowly returned to shape.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_50",
+      "value": "Because of you, I’ve become absurdly fat.\f(She lifted her belly fat and shook it, as if forcing you to look.)"
+    },
+    { "key": "hypnosis_WeightSpeech_55", "value": "My quiet, ordinary life…\ffuuh…" },
+    { "key": "hypnosis_WeightSpeech_60", "value": "(She looked up at the sky as though appealing to something that wouldn’t answer.)" },
+    { "key": "hypnosis_WeightSpeech_70", "value": "How far are you planning to take this?\fThis is more than enough." },
+    { "key": "hypnosis_WeightSpeech_80", "value": "…" },
+    {
+      "key": "hypnosis_WeightSpeech_90",
+      "value": "Do as you please until you get bored.\f(She arranged her face into a theatrical expression of exasperation.)"
+    },
+    {
+      "key": "hypnosis_WeightSpeech_100",
+      "value": "Maxed out.\fI have nothing left to say.\fDo whatever you like—I suppose that’s the point."
+    },
+
+    { "key": "hypnosis_FoodSpeech_1", "value": "I usually try not to eat things this sweet." },
+    { "key": "hypnosis_FoodSpeech_2", "value": "It’s far too oily.\fIf you eat this, you’ll gain weight…" },
+    { "key": "hypnosis_FoodSpeech_3", "value": "Ugh… it tastes chemical." },
+    { "key": "hypnosis_FoodSpeech_4", "value": "This isn’t even strawberry.\fWhat is this—food coloring flavor…?" },
+    { "key": "hypnosis_FoodSpeech_5", "value": "It’s cloyingly sweet.\fI prefer something a bit more bitter.\fActually, I don’t want to eat this sort of thing at all." },
+    { "key": "hypnosis_FoodSpeech_6", "value": "This is sitting heavy in my stomach…" },
+    { "key": "hypnosis_FoodSpeech_7", "value": "Shortcake.\fMy single favorite food." },
+    {
+      "key": "hypnosis_FoodSpeech_8",
+      "value": "Even if it’s something I like, I shouldn’t be able to eat this much.\f…No, surprisingly, I can.\f(She raised a finger sharply—an unspoken demand for “one more whole cake.”)"
+    },
+    { "key": "hypnosis_FoodSpeech_9", "value": "…\f…\f*burp*" },
+    {
+      "key": "hypnosis_FoodSpeech_10",
+      "value": "How many steps’ worth of calories are packed into each stick, I wonder.\fTerrifying.\f(She tipped the paper carton against her lips and forced down the fries pooled at the bottom in one go.)"
+    },
+    {
+      "key": "hypnosis_FoodSpeech_11",
+      "value": "Such a junky taste…\fSalt is covering up everything.\f(She folded the hamburger wrapper several times with needless care and set it gently on the table.)\f(The creases relaxed, and the wrapper quietly opened again.)"
+    },
+    { "key": "hypnosis_FoodSpeech_12", "value": "(It’s unexpectedly good.)" },
+    {
+      "key": "hypnosis_FoodSpeech_13",
+      "value": "Cold.\fLike my heart, spending its days with loneliness…\f…\fHuh?\f“You’re the one who’s cold,” you say?\fYour reaction is a lot colder than mine."
+    },
+    { "key": "hypnosis_FoodSpeech_14", "value": "It’d taste better if you ate the soda and the ice cream separately." },
+    { "key": "hypnosis_FoodSpeech_15", "value": "It chills my stomach and slows my metabolism." },
+    {
+      "key": "hypnosis_FoodSpeech_16",
+      "value": "What is this?\fI’ve never tasted anything like it.\fAt the very least, it’s not strawberry or peach…\nIt doesn’t seem like the flavor of any “pink” fruit.\n(She studied it with frank curiosity.)"
+    },
+    { "key": "hypnosis_FoodSpeech_17", "value": "How petty." },
+    { "key": "hypnosis_FoodSpeech_18", "value": "Isn’t this already washed-up?\f…Or has it looped around and become not washed-up?" },
+    { "key": "hypnosis_FoodSpeech_19", "value": "I’ve seen it sold, but I’ve never actually bought it." },
+    { "key": "hypnosis_FoodSpeech_20", "value": "Huh?\fDon’t make me eat something I can’t even identify." },
+    {
+      "key": "hypnosis_FoodSpeech_21",
+      "value": "I eat this maybe once a year.\fThere isn’t a single benefit to it.\f…Still, it’s surprisingly tasty."
+    },
+    { "key": "hypnosis_FoodSpeech_22", "value": "No, seriously, this is…\fI really hate this—can’t I refuse?" },
+    {
+      "key": "hypnosis_FoodSpeech_23",
+      "value": "Is “hot dog” some kind of metaphor?\fOh, it isn’t…?\fI’m overthinking?\fI see.\fDie."
+    },
+    { "key": "hypnosis_FoodSpeech_24", "value": "Chicken is poor people’s food, isn’t it." },
+    {
+      "key": "hypnosis_FoodSpeech_25",
+      "value": "My absolute favorite.\nMy second favorite food.\fFor this, I wouldn’t even mind gaining weight."
+    },
+    {
+      "key": "hypnosis_FoodSpeech_26",
+      "value": "What is with this description field?\fIs there some reference I’m missing?\fA typo?"
+    },
+    { "key": "hypnosis_FoodSpeech_27", "value": "This is a scam.\fA scam.\fAt least feed me something better." },
+    {
+      "key": "hypnosis_FoodSpeech_28",
+      "value": "Yes—excellent.\fDid you make it?\fOr is it store-bought?\fOf course it is.\n"
+    },
+    { "key": "hypnosis_FoodSpeech_29", "value": "Gourmet." },
+    { "key": "hypnosis_FoodSpeech_30", "value": "Delicious.\fI want you to serve only things like this." },
+    { "key": "hypnosis_FoodSpeech_31", "value": "Well done.\fI’ll leave the green peas—I don’t need them." },
+    {
+      "key": "hypnosis_FoodSpeech_32",
+      "value": "Vulgar food.\fLike feed for pigs.\fHuh? I was eating like a pig, you say?"
+    },
+    { "key": "hypnosis_FoodSpeech_33", "value": "A drink for idiots.\fOnly weird people seem to drink it." },
+    { "key": "hypnosis_FoodSpeech_34", "value": "It’s bad.\fWater would be better.\f…Maybe I’m just not used to it." },
+    { "key": "hypnosis_FoodSpeech_35", "value": "I drank this morning too.\fIt’s part of my routine." },
+    {
+      "key": "hypnosis_FoodSpeech_36",
+      "value": "Wha—\fWhat is this?\fIf you treat flavor as a vector,\nit’s precisely the inverse of milk."
+    },
+    {
+      "key": "hypnosis_FoodSpeech_37",
+      "value": "This is nothing but poison.\fI’m starting to feel sick…\fHuh? Underage drinking…?\f(She launches into an arbitrarily long, long-winded rationale.)\f(An oddly pedantic lecture follows.)\f(Then an emotionally charged personal thesis, delivered with conviction.)\fSo it’s fine.\fBesides, I’m over twenty.\fIt’s true."
+    },
+    {
+      "key": "hypnosis_FoodSpeech_38",
+      "value": "Splendid.\ffuu…\fAh, I’m starting to feel good.\f(She watched the amber surface of the liquid, then let the air brush her nose with a slow, quiet inhale.)"
+    },
+    { "key": "hypnosis_FoodSpeech_39", "value": "Ugh…\fI hate vegetables." },
+    { "key": "hypnosis_FoodSpeech_40", "value": "No matter how you look at it, it’s an ordinary apple." },
+    {
+      "key": "hypnosis_FoodSpeech_41",
+      "value": "Vulgar food.\fA synonym for “gold-leaf sushi.”\f…Wait, it’s gold all the way through.\fHow on earth do they make this…?"
+    },
+    {
+      "key": "hypnosis_FoodSpeech_42",
+      "value": "Torture?\nI don’t want to eat this.\fAt least allow me to leave the cucumber, tomato, and lettuce."
+    },
+    { "key": "hypnosis_FoodSpeech_43", "value": "…\fMy stomach feels settled." },
+    { "key": "hypnosis_FoodSpeech_44", "value": "…!!" },
+    { "key": "hypnosis_FoodSpeech_45", "value": "W-wait—\fThat’s…\f…" },
+    { "key": "hypnosis_FoodSpeech_46", "value": "Ngk, ngk…\fMmm—\f*pah!*\fS-stop—\fMmm—" },
+
+    {
+      "key": "haraibako_Start",
+      "value": "Hehe…\fI can work as hard as it takes—for you.\fSo…\fSo I want to become your ideal—your beautiful girlfriend."
+    },
+
+    {
+      "key": "haraibako_FoodSpeech_1",
+      "value": "Ah—thank you.\fIf it’s from you, I’ll eat it, but…"
+    },
+    {
+      "key": "haraibako_FoodSpeech_2",
+      "value": "Thank you.\fIt’s important to take a little break sometimes, right?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_3",
+      "value": "So goood…!!\fIf there were a donut shop near my place, I think things would’ve gotten a lot more disastrous than they already are."
+    },
+    {
+      "key": "haraibako_FoodSpeech_4",
+      "value": "Hehe.\fI’m so happy my brain might just melt."
+    },
+    {
+      "key": "haraibako_FoodSpeech_5",
+      "value": "I might be too full to eat anymore…\f…\fHehe—actually, I lied, because I thought being a small eater might seem cuter."
+    },
+    {
+      "key": "haraibako_FoodSpeech_6",
+      "value": "Hehe.\fDo you like watching me eat?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_7",
+      "value": "Mmm~!!\fIt tastes way better than when I eat alone!"
+    },
+    {
+      "key": "haraibako_FoodSpeech_8",
+      "value": "Huh!? It’s not my birthday today!\fAre you sure it’s okay?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_9",
+      "value": "If I drank the big version of this every day…\fI ended up getting all puffy and squishy like this."
+    },
+    {
+      "key": "haraibako_FoodSpeech_10",
+      "value": "Fries!\fFries, huh…"
+    },
+    { "key": "haraibako_FoodSpeech_11", "value": "Ah—it's a hamburger!" },
+    { "key": "haraibako_FoodSpeech_12", "value": "It feels like a pizza party. That’s kind of wonderful." },
+    { "key": "haraibako_FoodSpeech_13", "value": "I was just thinking it felt hot, actually." },
+    {
+      "key": "haraibako_FoodSpeech_14",
+      "value": "First you enjoy the float and the soda separately—and at the end, you stir it all together and eat it."
+    },
+    { "key": "haraibako_FoodSpeech_15", "value": "Lick, lick…\nHehe." },
+    { "key": "haraibako_FoodSpeech_16", "value": "It’s not strawberry…?" },
+    {
+      "key": "haraibako_FoodSpeech_17",
+      "value": "I’m so happy I can eat something like this with someone I love…\fLook forward to Valentine’s Day, okay?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_18",
+      "value": "Next time, I want to go drink the real shop kind together.\fHuh!? There aren’t any tapioca shops left anywhere?\fOh… I see…"
+    },
+    {
+      "key": "haraibako_FoodSpeech_19",
+      "value": "There was a time I couldn’t sleep, didn’t want to wake up, and kept wishing someone would save me…\fAnd I spent my days eating nothing but this.\fHehe— I love you."
+    },
+    {
+      "key": "haraibako_FoodSpeech_20",
+      "value": "What is this!?\fIt’s… something safe to eat, right?"
+    },
+    { "key": "haraibako_FoodSpeech_21", "value": "This is tasty, isn’t it!" },
+    {
+      "key": "haraibako_FoodSpeech_22",
+      "value": "Honestly, I want to put it on every food.\fEeh!? You drink it just like that!?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_23",
+      "value": "The ketchup part and the mustard part taste totally different, so it’s kind of a bargain."
+    },
+    { "key": "haraibako_FoodSpeech_24", "value": "I love karaage!" },
+    {
+      "key": "haraibako_FoodSpeech_25",
+      "value": "When summer break comes, I want to go to a festival and eat stall takoyaki with you.\f…Will you go with me?"
+    },
+    {
+      "key": "haraibako_FoodSpeech_26",
+      "value": "Rice really is the best!\fRice is the most delicious!"
+    },
+    {
+      "key": "haraibako_FoodSpeech_27",
+      "value": "A bento.\fIf I made a bento even better than this… would you eat it with me at lunch?\fSorry— you wouldn’t want that, right…"
+    },
+    {
+      "key": "haraibako_FoodSpeech_28",
+      "value": "I want to try cooking a spaghetti dish starting from the sauce.\fWait—this isn’t spaghetti, it’s pasta?"
+    },
+    { "key": "haraibako_FoodSpeech_29", "value": "Lovely… hehe." },
+    {
+      "key": "haraibako_FoodSpeech_30",
+      "value": "I don’t think I’ve ever won a fight against anyone… or anything."
+    },
+    {
+      "key": "haraibako_FoodSpeech_31",
+      "value": "It’s my specialty.\fIf we went out, I’d make it for you every day."
+    },
+    {
+      "key": "haraibako_FoodSpeech_32",
+      "value": "I’ve never eaten something like this before…\fMy breath isn’t bad, is it…?\fHuh— it smells sweet, like wonderful pancakes!?\fThat’s… okay, that’s definitely a lie."
+    },
+    {
+      "key": "haraibako_FoodSpeech_33",
+      "value": "If I drink this before gaming, I can focus better."
+    },
+    { "key": "haraibako_FoodSpeech_34", "value": "It’s surprisingly good." },
+    {
+      "key": "haraibako_FoodSpeech_35",
+      "value": "I’ve been forced to drink a rotten version of this before…\f…S-sorry, forget I said that!\fHehe."
+    },
+    { "key": "haraibako_FoodSpeech_36", "value": "Where did you even find something like this?" },
+    { "key": "haraibako_FoodSpeech_37", "value": "No comment! Hehe." },
+    { "key": "haraibako_FoodSpeech_38", "value": "The alcohol might be a little strong for me…" },
+    {
+      "key": "haraibako_FoodSpeech_39",
+      "value": "Even something like this tastes good if I’m eating with you.\fAh—hehe, I shouldn’t say “something like this,” should I?\fCarrots were already wonderful—and you made them even tastier!"
+    },
+    { "key": "haraibako_FoodSpeech_40", "value": "Such a lovely food." },
+    {
+      "key": "haraibako_FoodSpeech_41",
+      "value": "I feel like I’ve been granted some really powerful effects—shock absorption, regeneration, resistance, even fire resistance!\fAll right—let’s do this!"
+    },
+    { "key": "haraibako_FoodSpeech_42", "value": "Munch munch." },
+    { "key": "haraibako_FoodSpeech_43", "value": "I feel like something just improved…!!" },
+    {
+      "key": "haraibako_FoodSpeech_44",
+      "value": "I feel a little sick, but…\fIf it’s for you, I’m totally fine…!"
+    },
+    { "key": "haraibako_FoodSpeech_45", "value": "…!!" },
+    { "key": "haraibako_FoodSpeech_46", "value": "Nn…\fNn…\fNn…" },
+
+    { "key": "haraibako_WeightSpeech_1", "value": "Hehe." },
+    { "key": "haraibako_WeightSpeech_10", "value": "I’ve been happy—so, so happy." },
+    {
+      "key": "haraibako_WeightSpeech_20",
+      "value": "So… how is it? Am I getting better?\fHuh, you thought I was wonderful from the start?\fHehe…"
+    },
+    {
+      "key": "haraibako_WeightSpeech_25",
+      "value": "I ate to fill this empty body… but nothing felt filled, so I kept eating more.\fAt some point, I forgot what “being full” even meant."
+    },
+    {
+      "key": "haraibako_WeightSpeech_30",
+      "value": "I think I just wanted a reason to change.\fI love you, because you make all the things I wanted to do come true."
+    },
+    {
+      "key": "haraibako_WeightSpeech_35",
+      "value": "When I’m with you, fun things actually feel fun.\fBecause… until now, even fun never felt like fun."
+    },
+    {
+      "key": "haraibako_WeightSpeech_38",
+      "value": "If I lose weight and get cuter… will you go out with me?\fAh—hehe. I see…"
+    },
+    {
+      "key": "haraibako_WeightSpeech_42",
+      "value": "I’m going to gain even more…\fDo you… like me better when I’m heavier?"
+    },
+    { "key": "haraibako_WeightSpeech_44", "value": "Because… this face and body aren’t cute, are they?" },
+    { "key": "haraibako_WeightSpeech_48", "value": "Do you really like me better when I’m heavier?" },
+    {
+      "key": "haraibako_WeightSpeech_52",
+      "value": "If you want me to gain more, I’ll do my best—no matter what.\fBecause I love you… and I love eating delicious things, too."
+    },
+    {
+      "key": "haraibako_WeightSpeech_60",
+      "value": "Ah… can something this wonderful really exist?\fIt feels like a dream."
+    },
+    {
+      "key": "haraibako_WeightSpeech_75",
+      "value": "Because you tell me I’m wonderful…\fEven my soft, chubby belly is starting to feel wonderful."
+    },
+    {
+      "key": "haraibako_WeightSpeech_100",
+      "value": "Fuu…\fHehe…\fI ended up like this."
+    }
+  ]
+}
