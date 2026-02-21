@@ -2,7 +2,7 @@
   "id": "en",
   "name": "english",
   "entries": [
-    { "key": "title", "value": "fattening Simulator" },
+    { "key": "title", "value": "fattening Game" },
     { "key": "titleGameStartButton", "value": "Start" },
 
     { "key": "weighScaleLv1", "value": "gaunt" },
