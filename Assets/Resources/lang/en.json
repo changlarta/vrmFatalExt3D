@@ -232,6 +232,9 @@
     { "key": "cat_FoodSpeech_45", "value": "Kya... n-no...!\f" },
     { "key": "cat_FoodSpeech_46", "value": "Are you sane?" },
 
+    { "key": "cat_DropSpeech_10", "value": "To commemorate dropping an item 10 times, here's an explanation of the game rules.\fHold the item down while keeping it pressed, and bring it to my lips.\fok?" },
+    { "key": "cat_DropSpeech_100", "value": "I'm hungry, but...\f Is it a glitch in the game?\nOr are you just messing with me?" },
+
     {
     "key": "hypnosis_Start",
     "value": "Having been brainwashed by a hypnosis app, I became—pathetically—incapable of disobeying your commands.\fDeeper, and deeper…\fSunk into a profound conditioning.\fAh… how pitiable."
@@ -402,6 +405,9 @@
     { "key": "hypnosis_FoodSpeech_44", "value": "…!!" },
     { "key": "hypnosis_FoodSpeech_45", "value": "W-wait—\fThat’s…\f…" },
     { "key": "hypnosis_FoodSpeech_46", "value": "Ngk, ngk…\fMmm—\f*pah!*\fS-stop—\fMmm—" },
+
+    { "key": "hypnosis_DropSpeech_10", "value": "First, press and hold the item, then bring it to my mouth." },
+    { "key": "hypnosis_DropSpeech_100", "value": "Alright, alright. Playing with food is fun, isn't it?" },
 
     {
       "key": "haraibako_Start",
@@ -585,6 +591,8 @@
     {
       "key": "haraibako_WeightSpeech_100",
       "value": "Fuu…\fHehe…\fI ended up like this."
-    }
+    },
+    { "key": "haraibako_DropSpeech_10", "value": "Hmm, this is tricky, huh? \fFirst, try long-pressing the item." },
+    { "key": "haraibako_DropSpeech_100", "value": "Hmm" }
   ]
 }

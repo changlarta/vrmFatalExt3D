@@ -327,6 +327,8 @@ public class LongPressDragSpawner : MonoBehaviour,
                 ApplyEatStageVisual();
                 hitEnterUnscaledTime = Time.unscaledTime;
 
+                inst.isFirstEated = true;
+
                 if (inst != null)
                 {
                     inst.foodGauge = Mathf.Min(100, inst.foodGauge + itemInfo.careStomach);
@@ -550,6 +552,14 @@ public class LongPressDragSpawner : MonoBehaviour,
 
         if (rt != null)
         {
+            var inst = VrmChrSceneController.Instance;
+            var speechInst = VrmChrSceneTextController.Instance;
+            inst.dropCount++;
+            if (!inst.isFirstEated && inst.dropCount >= 10)
+            {
+                speechInst.setDropSpeech(inst.dropCount);
+            }
+
             AudioManager.Instance.PlaySE("delete_item");
             Destroy(rt.gameObject);
         }

@@ -85,6 +85,12 @@ public sealed class VrmChrSceneController : MonoBehaviour
 
     private float workoutCoinToastTimer = 0f;
 
+    [HideInInspector]
+    public int dropCount = 0;
+
+    [HideInInspector]
+    public bool isFirstEated = false;
+
     public void SetBlushState(BlushState state)
     {
         blushState = state;

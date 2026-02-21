@@ -111,4 +111,14 @@ public class VrmChrSceneTextController : MonoBehaviour
 
         dialog.Begin($"{speechCharacterType}_FoodSpeech_{id}");
     }
+
+    public void setDropSpeech(int id)
+    {
+        if (speechCharacterType == SpeechCharacterType.None) return;
+        if (dialog == null) return;
+
+        if (!spokenFoodIds.Add(id)) return;
+
+        dialog.Begin($"{speechCharacterType}_DropSpeech_{id}");
+    }
 }

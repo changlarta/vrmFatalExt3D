@@ -231,6 +231,9 @@
     { "key": "cat_FoodSpeech_45", "value": "きゃ…い、いや…!\f" },
     { "key": "cat_FoodSpeech_46", "value": "正気?" },
 
+    { "key": "cat_DropSpeech_10", "value": "10回アイテムを落とした記念に、ゲームのルールを説明します\fアイテムを長押ししたままホールドして\n私の口元に持ってきてね" },
+    { "key": "cat_DropSpeech_100", "value": "お腹空いたんだけど\fゲームの不具合?\nそれとも弄んでるだけ?" },
+
     { "key": "hypnosis_Start", "value": "洗脳アプリで洗脳されてしまった私は\fなんと哀れにもお前の命令に背けない状態になってしまったのでしたとさ\f深く、深く…。深い洗脳に\fああ、可哀そう" },
 
     { "key": "hypnosis_WeightSpeech_3", "value": "目的が分からない。意味不明。狂気でしかない" },
@@ -306,6 +309,9 @@
     { "key": "hypnosis_FoodSpeech_45", "value": "えっあっ\fそんな\f…" },
     { "key": "hypnosis_FoodSpeech_46", "value": "んぐんぐ\fんー\fぷはっ!\fやめっ\fんー" },
 
+    { "key": "hypnosis_DropSpeech_10", "value": "まずアイテムを長押して\fそのままホールドして、私の口元に持ってきて欲しい" },
+    { "key": "hypnosis_DropSpeech_100", "value": "はいはい。食べ物で遊ぶのは楽しいですね" },
+
     { "key": "haraibako_Start", "value": "えへ…\f私…あなたのためならいくらでも頑張れるから\fだから…\fだから私はあなたの理想の綺麗な彼女になりたい" },
 
     { "key": "haraibako_FoodSpeech_1", "value": "えっあっ、ありがとう\fあなたがくれるなら食べるけど…" },
@@ -369,6 +375,9 @@
     { "key": "haraibako_WeightSpeech_60", "value": "ああ、こんなに素敵なことってある?\f夢みたい" },
     { "key": "haraibako_WeightSpeech_75", "value": "あなたが素敵って思ってくれるから\f太ってるお腹も素敵に思えてきた" },
     { "key": "haraibako_WeightSpeech_100", "value": "ふぅ…\fえへ\fこんなになっちゃった" },
+
+    { "key": "haraibako_DropSpeech_10", "value": "うーん、難しいよね\fまずはアイテムを長押してみて" },
+    { "key": "haraibako_DropSpeech_100", "value": "うーん、、、" },
     { "key": "", "value": "" }
   ]
 }
