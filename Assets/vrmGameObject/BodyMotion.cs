@@ -150,7 +150,7 @@ public sealed class BodyMotion : IDisposable
         float body = bodyKey01;
 
         float headScaleFactor = Mathf.LerpUnclamped(1.05f, 1.45f, height);
-        float neckScaleFactor = Mathf.LerpUnclamped(0.95f, 0.88f, height);
+        float neckScaleFactor = Mathf.LerpUnclamped(0.92f, 0.88f, height);
         float chestScaleFactor = Mathf.LerpUnclamped(1f, 0.98f, height);
         float upperChestScaleFactor = Mathf.LerpUnclamped(1f, 0.98f, height);
         float shoulderScaleFactor = Mathf.LerpUnclamped(0.98f, 0.98f, height);

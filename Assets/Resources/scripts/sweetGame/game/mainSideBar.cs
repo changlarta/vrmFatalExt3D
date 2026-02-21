@@ -176,7 +176,7 @@ public class mainSideBar : MonoBehaviour
         ItemInfo.P(level:2,price:4000,cal:0,careStomach:-30),
         ItemInfo.P(level:3,price:10000,cal:-3000,careStomach:-30,addStomachSpeed:2f,addMaxStomach:30f,eatSteps: 1,isDrinkSE: EatSE.drag),
         ItemInfo.P(level:4,price:90000,cal:10000,eatSteps: 1,isDrinkSE: EatSE.sugar),
-        ItemInfo.P(level:4,price:90000,cal:100,eatSteps: 1,careStomach:10,isDrinkSE: EatSE.drink,isHose:true)
+        ItemInfo.P(level:4,price:90000,cal:100,eatSteps: 1,careStomach:10,isDrinkSE: EatSE.drink,isHose:true),
     };
 
     private static ItemInfo[] itemsFixed;
@@ -260,7 +260,7 @@ public class mainSideBar : MonoBehaviour
 
     private int CalculateNextLvCost(int lv)
     {
-        return (1 + lv) * (1 + lv) / 2;
+        return (1 + lv) * (1 + lv);
     }
 
     public void SetItemLv(int newItemLv)
@@ -330,7 +330,9 @@ public class mainSideBar : MonoBehaviour
         for (int i = 0; i < itemsFixed.Length; i++)
         {
             var info = itemsFixed[i];
-            if (itemLv < info.level) continue;
+            var selectMode = SweetGameVrmStore.speechType == SpeechCharacterType.None;
+            var overrideEnable = info.isHose && selectMode;
+            if (itemLv < info.level && !overrideEnable) continue;
 
             var go = Instantiate(itemPrefab, content, false);
             spawnedItems.Add(go);

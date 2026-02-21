@@ -59,11 +59,7 @@ public class configSideBar : MonoBehaviour
         bgmSlider.onValueChanged.AddListener(v => AudioManager.Instance.SetBGMVolume(v));
 
         var langSection = content.GetChild(3);
-        langeText = langSection.GetChild(0).GetComponent<TextMeshProUGUI>();
-        var jpLangBtn = langSection.GetChild(1).AddComponent<Button>();
-        jpLangBtn.onClick.AddListener(() => LocalizationManager.Instance.ChangeLang(0));
-        var engLangBtn = langSection.GetChild(2).AddComponent<Button>();
-        engLangBtn.onClick.AddListener(() => LocalizationManager.Instance.ChangeLang(1));
+        langeText = langSection.GetChild(2).GetComponent<TextMeshProUGUI>();
 
         if (content.childCount < 5) return;
 

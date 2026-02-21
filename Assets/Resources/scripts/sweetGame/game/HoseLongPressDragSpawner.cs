@@ -149,27 +149,37 @@ public class HoseLongPressDragSpawner : MonoBehaviour, IPointerDownHandler, IPoi
         if (hoseRoot != null) ReleaseCurrentHoseToFall();
 
         var inst = VrmChrSceneController.Instance;
-        int value = itemInfo.price;
 
-        if (inst != null && inst.coin < value)
+        bool selectMode = SweetGameVrmStore.speechType == SpeechCharacterType.None;
+        bool locked = IsLocked();
+
+        if (locked)
         {
-            isDragging = false;
-            AudioManager.Instance.PlaySE("beep");
-            ShowFoodInfo();
-            return;
-        }
-
-        if (inst != null)
-        {
-            inst.coin -= value;
-
-            if (IsLocked())
+            if (selectMode)
             {
-                if (owner != null && itemIndex >= 0) owner.SetItemUnlocked(itemIndex, true);
-                ApplyLockVisual();
+                if (owner != null && itemIndex >= 0)
+                    owner.SetItemUnlocked(itemIndex, true);
+            }
+            else
+            {
+                int cost = itemInfo.price;
+
+                if (inst != null && inst.coin < cost)
+                {
+                    isDragging = false;
+                    AudioManager.Instance.PlaySE("beep");
+                    ShowFoodInfo();
+                    return;
+                }
+
+                if (inst != null) inst.coin -= cost;
+
+                if (owner != null && itemIndex >= 0)
+                    owner.SetItemUnlocked(itemIndex, true);
             }
         }
 
+        ApplyLockVisual();
         lookToken++;
         currentToken = lookToken;
 
@@ -657,7 +667,16 @@ public class HoseLongPressDragSpawner : MonoBehaviour, IPointerDownHandler, IPoi
         var tmp = child.GetComponent<TextMeshProUGUI>();
         if (tmp == null) return;
 
-        tmp.text = itemInfo.price.ToString();
+        bool selectMode = SweetGameVrmStore.speechType == SpeechCharacterType.None;
+
+        if (selectMode)
+        {
+            tmp.text = "FREE";
+            return;
+        }
+
+        bool locked = IsLocked();
+        tmp.text = locked ? itemInfo.price.ToString() : "FREE";
     }
 
     private bool IsLocked()
@@ -686,6 +705,8 @@ public class HoseLongPressDragSpawner : MonoBehaviour, IPointerDownHandler, IPoi
             cb.disabledColor = target;
             selectable.colors = cb;
         }
+
+        SetPriceText();
     }
 
     private void ShowFoodInfo()

@@ -83,6 +83,8 @@ public sealed class VrmChrSceneController : MonoBehaviour
     private float blushTimer = 0f;
     private const float BlushHoldSeconds = 0.4f;
 
+    private float workoutCoinToastTimer = 0f;
+
     public void SetBlushState(BlushState state)
     {
         blushState = state;
@@ -186,7 +188,7 @@ public sealed class VrmChrSceneController : MonoBehaviour
         {
             foodGaugeTimer -= FoodGaugeTickSeconds;
 
-            float effectivePerTick = foodGaugePerTick + (isWorkoutActive ? workoutFoodGaugePerTickAdd : 0f);
+            float effectivePerTick = foodGaugePerTick + (isWorkoutActive ? workoutFoodGaugePerTickAdd / 4 : 0f);
             foodGauge = Mathf.Max(0f, foodGauge - effectivePerTick);
             float t = Mathf.InverseLerp(-100, 100, -90);
             var warnPosition = Mathf.Clamp01(t) * 100f;
@@ -278,6 +280,18 @@ public sealed class VrmChrSceneController : MonoBehaviour
 
         if (isWorkoutActive)
         {
+            workoutCoinToastTimer += Time.deltaTime;
+
+            var second = 5 / Mathf.Max(0.01f, workOutInfo.consumeCal);
+            while (workoutCoinToastTimer >= second)
+            {
+                workoutCoinToastTimer -= second;
+                var addcoin = 2 * workLv;
+                canvasUIController.calToastGenController.GenToast("+" + addcoin + "coin");
+                coin += addcoin;
+                AudioManager.Instance.PlaySE("add_money");
+            }
+
             if (!string.IsNullOrEmpty(workoutEventKey))
             {
                 vrmToController.ApplyEvent(workoutEventKey);
@@ -419,6 +433,7 @@ public sealed class VrmChrSceneController : MonoBehaviour
 
         workOutInfo = info;
         isWorkoutActive = true;
+        workoutCoinToastTimer = 0f;
         workoutEventKey = info.id;
 
         workoutFoodGaugePerTickAdd = info.consumeCal / 20f;
