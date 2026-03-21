@@ -37,6 +37,7 @@ public sealed class VrmExpressionController : MonoBehaviour
         FoodEating2,
         FoodEating3,
         Tired,
+        joggingTired,
         blush_tap_face,
         blush_swaip_face,
         blush_tap,
@@ -315,6 +316,16 @@ public sealed class VrmExpressionController : MonoBehaviour
                         new Op("Fcl_EYE_Joy",0.1f),
                         new Op("Fcl_EYE_Close",0.1f),
                         new Op("Fcl_MTH_Large",0.2f),
+                    }
+                );
+
+            case SavedExpression.joggingTired:
+                return new Recipe(
+                    new[] {
+                        new Op("Fcl_BRW_Sorrow",0.4f),
+                        new Op("Fcl_EYE_Joy",1f),
+                        new Op("Fcl_MTH_Large",0.2f),
+                        new Op("Fcl_MTH_O",0.5f),
                     }
                 );
 

@@ -18,12 +18,11 @@ public class moveGameSceneCamera : MonoBehaviour
 
     // ====== 追加：上下揺れ用（既存パラメータ名は変更しない） ======
     [Header("Shake (Vertical Only)")]
-    [SerializeField] private float shakeDuration = 0.15f;   // 揺れる時間(秒)
-    [SerializeField] private float shakeAmplitude = 0.05f;  // 上下揺れ幅(メートル)
-    [SerializeField] private float shakeFrequency = 25f;    // 揺れの速さ
+    private const float shakeDuration = 0.5f;   // 揺れる時間(秒)
 
     private float _shakeTimeLeft = 0f;
     private float _shakePhase = 0f;
+    private float shakeValue = 1;
     // ===============================================================
 
     // ====== 追加：高さに応じた距離/角度制御 ======
@@ -46,10 +45,10 @@ public class moveGameSceneCamera : MonoBehaviour
     }
 
     // 外部（moveGameSceneController 等）から呼ぶ
-    public void TriggerShake()
+    public void TriggerShake(float value)
     {
-        _shakeTimeLeft = shakeDuration;
-        // 位相は継続でOK。毎回変えたいなら _shakePhase += Random.value * 10f; など。
+        _shakeTimeLeft = shakeDuration * value;
+        shakeValue = value;
     }
 
     private void LateUpdate()
@@ -79,14 +78,14 @@ public class moveGameSceneCamera : MonoBehaviour
         if (_shakeTimeLeft > 0f)
         {
             _shakeTimeLeft -= Time.deltaTime;
-            _shakePhase += Time.deltaTime * shakeFrequency;
+            _shakePhase += Time.deltaTime * 15;
 
             // PerlinNoiseで滑らかに（-0.5〜0.5）
             float n = Mathf.PerlinNoise(_shakePhase, 0.123f) - 0.5f;
 
             // 終了に向けて減衰（自然に止まる）
-            float tt = Mathf.Clamp01(_shakeTimeLeft / shakeDuration);
-            shakeY = n * shakeAmplitude * tt;
+            float tt = Mathf.Clamp01(_shakeTimeLeft / (shakeDuration * shakeValue));
+            shakeY = n * 0.1f * tt * shakeValue;
         }
 
         // 最終位置

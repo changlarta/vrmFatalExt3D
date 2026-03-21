@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UniVRM10;
 using UnityEngine.EventSystems;
+using UniGLTF.SpringBoneJobs.Blittables;
+using System.Reflection;
 
 public enum BodyVariant
 {
@@ -51,6 +53,10 @@ public sealed class VrmToController : MonoBehaviour
     [Space(6)]
     public Texture2D face3Tex;
     public Texture2D face3Tex2;
+
+    [Header("Final Shade Override")]
+    public bool overrideShadeColor = false;
+    public Color overrideShadeColorValue = Color.white;
 
     [Range(0, 100)] public float face3Key = 0f;
     [Range(-3, 100)] public float bodyKey = 0f;
@@ -120,6 +126,7 @@ public sealed class VrmToController : MonoBehaviour
     private Transform _headBone;
 
     private readonly List<Material> _runtimeMaterials = new();
+    private static readonly int ShadeColorId = Shader.PropertyToID("_ShadeColor");
     private Texture2D _runtimeBakedBodyTex;
     private Texture2D _runtimeBakedFaceTex;
 
@@ -550,12 +557,92 @@ public sealed class VrmToController : MonoBehaviour
             if (myVersion != _initVersion) return;
 
             SetupMeshPullRuntime();
+            ApplyFinalShadeOverride();
 
             _ready = true;
         }
         catch (Exception ex)
         {
             Debug.LogError("[VrmToController] Exception: " + ex.Message + "\n" + ex.StackTrace);
+        }
+    }
+
+    public async Task ShutdownForSceneLeaveAsync()
+    {
+        _ready = false;
+        _lookAtOverrideActive = false;
+        _lookAtOverrideBlend01 = 0f;
+
+        MeshPull_CancelAll();
+        enabled = false;
+
+        if (_humanoidAnim != null)
+        {
+            _humanoidAnim.enabled = false;
+        }
+
+        if (_bodyRoot != null)
+        {
+            foreach (var a in _bodyRoot.GetComponentsInChildren<Animator>(true))
+            {
+                if (a != null) a.enabled = false;
+            }
+        }
+
+        TryStopSpringBoneRuntime();
+
+        if (_vrmInstance != null && _vrmInstance.gameObject != null)
+        {
+            _vrmInstance.gameObject.SetActive(false);
+        }
+
+        if (_bodyRoot != null)
+        {
+            _bodyRoot.SetActive(false);
+        }
+
+        // job / animator 側が1フレームで抜けきらないことがあるので少し待つ
+        await Task.Yield();
+        await Task.Yield();
+
+        await CleanupRuntimeAsync();
+    }
+
+    private void TryStopSpringBoneRuntime()
+    {
+        if (_vrmInstance == null) return;
+
+        try
+        {
+            var springBone = _vrmInstance.Runtime?.SpringBone;
+            if (springBone == null) return;
+
+            // 新しめの版にだけ IsSpringBoneEnabled がある場合に備える
+            var prop = springBone.GetType().GetProperty(
+                "IsSpringBoneEnabled",
+                BindingFlags.Instance | BindingFlags.Public
+            );
+
+            if (prop != null && prop.CanWrite)
+            {
+                prop.SetValue(springBone, false);
+                return;
+            }
+
+            // あなたの版向けのフォールバック
+            springBone.SetModelLevel(
+                _vrmInstance.transform,
+                new BlittableModelLevel
+                {
+                    StopSpringBoneWriteback = true,
+                    SupportsScalingAtRuntime = true,
+                    ExternalForce = Vector3.zero
+                }
+            );
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[VrmToController] SpringBone stop failed: " + e.Message);
         }
     }
 
@@ -622,8 +709,6 @@ public sealed class VrmToController : MonoBehaviour
         await Task.Yield();
         await Task.Yield();
     }
-
-
 
     private async Task ForceReleaseAfterDestroyAsync()
     {
@@ -1345,6 +1430,116 @@ public sealed class VrmToController : MonoBehaviour
         return cnt;
     }
 
+    public void BindToExistingRuntimeIfPresent()
+    {
+        vrmToRuntimeController = GetComponent<VrmToRuntimeController>();
+        _humanoidAnim = GetComponent<HumanoidAnimationController>();
+
+        Transform best = null;
+        int bestDepth = int.MaxValue;
+
+        var anims = GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+            if (!a.transform.IsChildOf(transform)) continue;
+
+            int d = GetHierarchyDepthFrom(a.transform, transform);
+            if (d < bestDepth)
+            {
+                bestDepth = d;
+                best = a.transform;
+            }
+        }
+
+        if (best == null)
+        {
+            _ready = false;
+            return;
+        }
+
+        _bodyRoot = best.gameObject;
+
+        var smrs = _bodyRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+        _bodyPrimarySmr = null;
+        int bodyBestDepth = int.MaxValue;
+        string bodyBestName = null;
+
+        for (int i = 0; i < smrs.Length; i++)
+        {
+            var s = smrs[i];
+            if (s == null || s.sharedMesh == null) continue;
+            if (s.sharedMesh.GetBlendShapeIndex("body") < 0) continue;
+
+            int d = GetHierarchyDepthFrom(s.transform, _bodyRoot.transform);
+            string n = s.name ?? string.Empty;
+
+            if (_bodyPrimarySmr == null ||
+                d < bodyBestDepth ||
+                (d == bodyBestDepth && string.CompareOrdinal(n, bodyBestName) < 0))
+            {
+                _bodyPrimarySmr = s;
+                bodyBestDepth = d;
+                bodyBestName = n;
+            }
+        }
+
+        if (_bodyPrimarySmr == null)
+        {
+            _ready = false;
+            return;
+        }
+
+        _face3Smr = null;
+        int faceBestDepth = int.MaxValue;
+        string faceBestName = null;
+
+        for (int i = 0; i < smrs.Length; i++)
+        {
+            var s = smrs[i];
+            if (s == null || s.sharedMesh == null) continue;
+            if (s.sharedMesh.GetBlendShapeIndex("key") < 0) continue;
+
+            int d = GetHierarchyDepthFrom(s.transform, _bodyRoot.transform);
+            string n = s.name ?? string.Empty;
+
+            if (_face3Smr == null ||
+                d < faceBestDepth ||
+                (d == faceBestDepth && string.CompareOrdinal(n, faceBestName) < 0))
+            {
+                _face3Smr = s;
+                faceBestDepth = d;
+                faceBestName = n;
+            }
+        }
+
+        _bodyKeyIndex = _bodyPrimarySmr.sharedMesh.GetBlendShapeIndex("body");
+        _face3KeyIndex = (_face3Smr != null) ? _face3Smr.sharedMesh.GetBlendShapeIndex("key") : -1;
+
+        _retarget = _retarget ?? new VrmRetargeting();
+        _motion = _motion ?? new BodyMotion();
+
+        _bodyBoneMap = _retarget.BuildBoneMap(_bodyRoot.transform);
+
+        var animator = _bodyRoot.GetComponentInChildren<Animator>(true) ?? _bodyRoot.AddComponent<Animator>();
+
+        if (!_motion.TryCaptureReferences(animator, _bodyRoot.transform, out var bones))
+        {
+            _ready = false;
+            return;
+        }
+
+        _motion.Bones = bones;
+
+        if (_humanoidAnim != null)
+            _humanoidAnim.Initialize(animator, _motion, _bodyRoot.transform);
+
+        if (meshPullEnabled) SetupMeshPullRuntime();
+
+        _ready = true;
+    }
     public void ApplyEvent(string eventKey)
     {
         if (vrmToRuntimeController != null) vrmToRuntimeController.ApplyEvent(eventKey);
@@ -1393,6 +1588,17 @@ public sealed class VrmToController : MonoBehaviour
         return null;
     }
 
+    private void ApplyFinalShadeOverride()
+    {
+        if (overrideShadeColor)
+        {
+            FindMaterialByBaseName(_bodyPrimarySmr.sharedMaterials, "BodySkin")
+                .SetColor(ShadeColorId, overrideShadeColorValue);
+            FindMaterialByBaseName(_face3Smr.sharedMaterials, "faceSkin")
+                .SetColor(ShadeColorId, overrideShadeColorValue);
+        }
+    }
+
     // =========================
     // SetupMeshPullRuntime() and below: FULL BLOCK (no logs)
     // =========================
@@ -1400,6 +1606,12 @@ public sealed class VrmToController : MonoBehaviour
     private void SetupMeshPullRuntime()
     {
         ResetMeshPullRuntime();
+
+        if (!meshPullEnabled)
+        {
+            // MeshPullを使わないモードでは、ランタイムmeshを生成しない
+            return;
+        }
 
         if (_mainCam == null) _mainCam = Camera.main;
 
@@ -1516,6 +1728,27 @@ public sealed class VrmToController : MonoBehaviour
     private void OnDisable()
     {
         MeshPull_CancelAll();
+        _motion?.RestoreReferencePose();
+    }
+
+    private static int GetHierarchyDepthFrom(Transform t, Transform rootExclusive)
+    {
+        int d = 0;
+        while (t != null && t != rootExclusive)
+        {
+            t = t.parent;
+            d++;
+        }
+        return d;
+    }
+
+    private void OnEnable()
+    {
+        // 既存の入力状態などが残っているとおかしくなるのでキャンセル
+        MeshPull_CancelAll();
+
+        // ★複製後に「既存の生成物（bodyRoot/Animator/SMRなど）」へ再バインド
+        BindToExistingRuntimeIfPresent();
     }
 
     private void MeshPull_CancelAll()

@@ -29,6 +29,21 @@ public class TitleCanvas : MonoBehaviour
         Application.OpenURL(url);
     }
 
+    public IEnumerator LoadSceneMoveGame()
+    {
+        yield return new WaitForSeconds(0.5f);
+        SceneManager.LoadScene("moveGame");
+    }
+
+    public void OnTapStartGameMoveGame()
+    {
+        if (_isTransitioning) return;
+        _isTransitioning = true;
+
+        AudioManager.Instance.PlaySE("titleButton");
+        StartCoroutine(LoadSceneMoveGame());
+    }
+
     private IEnumerator LoadSceneAfterDelay()
     {
         yield return new WaitForSeconds(0.5f);

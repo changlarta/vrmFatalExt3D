@@ -1,172 +1,360 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class GroundStreamer : MonoBehaviour
 {
-    // ★ 道幅はここ1か所だけ（変更はここだけでOK）
     public const float LANE_WIDTH = 20f;
+    public const float EPS = 1e-4f;
+
+    public static readonly Vector3 HIDDEN_POS = new Vector3(-100f, 100f, 0f);
+
+    public int DIFFICULTY_MAX_TILE = 1000;
 
     [Header("Required")]
-    public Material groundMaterial; // 必須（PrefabではなくMaterialを指定）
+    public Material groundMaterial;
 
     [Header("Building materials (choose 1 of 3 per cube)")]
-    public Material buildingMaterial1; // 必須
-    public Material buildingMaterial2; // 必須
-    public Material buildingMaterial3; // 必須
+    public Material buildingMaterial1;
+    public Material buildingMaterial2;
+    public Material buildingMaterial3;
 
     [Header("Tile settings")]
-    public float tileLength = 20f;  // 1タイルのZ長さ
-    public int tilesAhead = 8;      // 前方生成数
-    public int tilesBehind = 2;     // 後方保持数（通過済みは破棄）
+    public float tileLength = 20f;
+    public int tilesAhead = 8;
+    public int tilesBehind = 2;
 
     [Header("Side buildings (generated cubes)")]
     public bool buildingsEnabled = true;
+    public float buildingWidth = 10f;
+    public float buildingMinHeight = 3f;
+    public float buildingMaxHeight = 20f;
+    public float segmentMinLength = 120f;
+    public float segmentMaxLength = 120f;
 
-    // ===== public を上から順に指定値へ =====
-    public float buildingWidth = 10f;        // 横幅10
-    public float buildingMinHeight = 3f;     // 最小高さ3
-    public float buildingMaxHeight = 20f;    // 最大高さ10
-    public float segmentMinLength = 120f;    // 最小横幅120（Z方向の敷き詰め単位）
-    public float segmentMaxLength = 120f;    // 最大横幅120（同じ）
+    [Header("Enemy prefabs (Phase 1 / Phase 2)")]
+    [SerializeField] private List<GameObject> enemyPrefabsPhase1 = new List<GameObject>();
+    [SerializeField] private List<GameObject> enemyPrefabsPhase2 = new List<GameObject>();
 
-    // -------------------------
-    // Enemy spawn (integrated)
-    // -------------------------
-    [Header("Enemy spawn (integrated)")]
-    [Tooltip("敵Prefab（必須）。フォールバック無し：未設定なら停止します。")]
-    public GameObject enemyPrefab;
-
-    [Tooltip("地面タイルを何個生成するたびに敵を生成するか")]
-    [Min(1)] public int spawnEnemyEveryTiles = 10;
-
-    [Tooltip("発生1回あたりの敵数")]
-    [Min(1)] public int enemiesPerSpawn = 1;
-
-    [Tooltip("タイル内の敵X配置マージン（端から内側に寄せる）")]
+    [Header("Enemy placement")]
     [Min(0f)] public float enemyXMargin = 0.5f;
+    [SerializeField] private int enemyLayer = 11;
 
-    [Tooltip("敵のYオフセット（地面=0基準）")]
-    public float enemyYOffset = 0f;
+    [Header("Difficulty start tile offset (UI + difficulty)")]
+    public int startTileIndexPublic = 0;
 
-    [Tooltip("敵が破棄ラインを越えてから削除するまでの遅延秒")]
-    [Min(0f)] public float enemyDespawnDelaySeconds = 1.0f;
+    [Header("Blockade (every N tiles)")]
+    [Min(1)] public int blockadeEveryTiles = 100;
 
-    [Tooltip("破棄ラインを越えた後、さらにこの距離ぶん後方へ抜けたら削除OKにする")]
-    [Min(0f)] public float enemyExtraBehindDistance = 0.0f;
+    [Header("Boss prefabs (Phase 1 / Phase 2)")]
+    public List<GameObject> bossPrefabsPhase1 = new List<GameObject>();
+    public List<GameObject> bossPrefabsPhase2 = new List<GameObject>();
 
-    // タイル境界にピッタリ合わせるための微小誤差吸収
-    private const float EPS = 1e-4f;
+    [Header("Blockade Wall (single thin quad)")]
+    public Material blockadeWallMaterial;
+    [Min(0.1f)] public float blockadeWallHeight = 8f;
+    public float blockadeWallY = 0f;
+    public float blockadeWallZOffset = -0.05f;
+
+    private bool blockadeActive = false;
+    private bool blockadeSpawned = false;
+    private int nextBlockadeIndex = 100;
+    private GameObject currentBoss = null;
+
+    private bool blockadeMinFrozen = false;
+    private int frozenMinKeepIdx = 0;
+
+    private GameObject blockadeWallGO = null;
+
+    private Vector3 lastBossPos = Vector3.zero;
+    private bool isReloadingWorld = false;
+    private bool suppressEnemySpawns = false;
+    private bool titlePresentationMode = false;
+
+    [Header("Heavy Enemy (Phase 2 only, template is loaded once, then duplicated)")]
+    [SerializeField] private GameObject heavyEnemyPrefab;
+
+    [Header("Heavy spawn key random (10..90)")]
+    [Min(0f)] public float heavySpawnKeyMin = 10f;
+    [Min(0f)] public float heavySpawnKeyMax = 90f;
+
+    [HideInInspector]
+    public GameObject heavyTemplate;
+    private HeavyEnemyController heavyTemplateCtrl;
+    private bool heavyTemplateLoaded = false;
+
+    private readonly List<GameObject> aliveHeavies = new List<GameObject>();
+
+    public HeavyEnemyController HeavyTemplateController => heavyTemplateCtrl;
+
+    public enum FoodAttribute
+    {
+        None,
+        Thunder,
+        Ice,
+        Gold
+    }
+
+    [Serializable]
+    public struct FoodDef
+    {
+        public Sprite sprite;
+        public int healAmount;
+        public float addWeight;
+        public float foodScale;
+        public FoodAttribute attribute;
+    }
+
+    [Header("Food (spawned billboards)")]
+    public List<FoodDef> foods = new List<FoodDef>();
+
+    [Header("Rare Food (2% spawn chance)")]
+    public List<FoodDef> rareFoods = new List<FoodDef>();
+
+    public float foodY = 0.8f;
+    public int foodLayer = 0;
+
+    [SerializeField] private DashboardSpawner dashboardSpawner;
 
     private Transform followTarget;
-
-    // tile index -> root GameObject（地面 + 建物を子に持つ）
     private readonly Dictionary<int, GameObject> tiles = new Dictionary<int, GameObject>();
 
-    // 「到達した最前方」を基準に生成/破棄する（後退では生成しない）
     private float furthestZ = float.NegativeInfinity;
     private int lastBuiltFurthestIndex = int.MinValue;
 
-    // 生成済み地面のZ範囲（外へ出ないためのクランプ用）
     private float groundMinZ = 0f;
     private float groundMaxZ = 0f;
 
     public float GetGroundMinZ() => groundMinZ;
     public float GetGroundMaxZ() => groundMaxZ;
 
-    // --- 敵削除ライン（GroundStreamerの保持範囲と同型） ---
-    // tilesBehindに基づく「後方破棄ライン」をZで保持して、敵側が参照する
     private float enemyDespawnZLine = float.NegativeInfinity;
-
-    /// <summary>
-    /// GroundStreamerの現在の「後方破棄ライン」。
-    /// このラインより十分後ろへ抜けた敵は、遅延の後に削除される。
-    /// </summary>
     public float GetEnemyDespawnZLine() => enemyDespawnZLine;
 
-    // 「新規生成したタイル数」（破棄されても減らさない）
     private int totalCreatedTiles = 0;
+    private float timerAccumulator = 0f;
+
+    private readonly List<GameObject> aliveEnemies = new List<GameObject>();
+    public List<GameObject> GetAliveEnemies()
+    {
+        for (int i = aliveEnemies.Count - 1; i >= 0; i--)
+        {
+            var e = aliveEnemies[i];
+            if (e == null || !e.activeInHierarchy) aliveEnemies.RemoveAt(i);
+        }
+        return aliveEnemies;
+    }
+
+    private readonly List<GameObject> aliveFoods = new List<GameObject>();
+    public List<GameObject> GetAliveFoods()
+    {
+        for (int i = aliveFoods.Count - 1; i >= 0; i--)
+            if (aliveFoods[i] == null) aliveFoods.RemoveAt(i);
+        return aliveFoods;
+    }
+
+    private readonly Dictionary<int, FoodDef> foodDefByInstanceId = new Dictionary<int, FoodDef>();
+
+    public void SetTitlePresentationMode(bool value)
+    {
+        titlePresentationMode = value;
+    }
+
+    public bool TryGetFoodDef(GameObject foodGO, out FoodDef def)
+    {
+        def = default;
+        return foodDefByInstanceId.TryGetValue(foodGO.GetInstanceID(), out def);
+    }
+
+    public void ConsumeFood(GameObject foodGO)
+    {
+        foodDefByInstanceId.Remove(foodGO.GetInstanceID());
+
+        for (int i = aliveFoods.Count - 1; i >= 0; i--)
+            if (aliveFoods[i] == null || aliveFoods[i] == foodGO) aliveFoods.RemoveAt(i);
+
+        Destroy(foodGO);
+    }
+
+    public int GetCurrentTileIndex()
+    {
+        if (titlePresentationMode) return 0;
+        return Mathf.FloorToInt(followTarget.position.z / tileLength);
+    }
+
+    public int GetLogicalTileIndex()
+    {
+        if (titlePresentationMode) return 0;
+
+        long logical = (long)GetCurrentTileIndex() + (long)startTileIndexPublic;
+        if (logical < 0) logical = 0;
+        if (logical > int.MaxValue) logical = int.MaxValue;
+        return (int)logical;
+    }
+
+    public int GetContinueStartTileIndex()
+    {
+        int start = GetLogicalTileIndex() - 100;
+        if (start < 0) start = 0;
+        start = (start / 50) * 50;
+        return start;
+    }
+
+    public void PrepareStartFromTitle()
+    {
+        titlePresentationMode = false;
+        startTileIndexPublic = 0;
+    }
+
+    public void PrepareContinueFromCurrentPosition()
+    {
+        int continueStart = GetContinueStartTileIndex();
+        titlePresentationMode = false;
+        startTileIndexPublic = continueStart;
+    }
+
+    public void SetStartTileIndex(int logicalTileIndex)
+    {
+        startTileIndexPublic = Mathf.Max(0, logicalTileIndex);
+    }
+
+    private int GetLogicalTileIndexForPhysicalTile(int physicalTileIndex)
+    {
+        if (titlePresentationMode) return 0;
+
+        long logical = (long)physicalTileIndex + (long)startTileIndexPublic;
+        if (logical < 0) logical = 0;
+        if (logical > int.MaxValue) logical = int.MaxValue;
+        return (int)logical;
+    }
+
+    private float GetDifficultyT()
+    {
+        if (titlePresentationMode) return 0f;
+        return Mathf.Clamp01(GetLogicalTileIndex() / (float)DIFFICULTY_MAX_TILE);
+    }
+
+    private static int SampleStochasticCount(float expected)
+    {
+        int baseCount = Mathf.FloorToInt(expected);
+        float frac = expected - baseCount;
+        return baseCount + ((frac > 0f && UnityEngine.Random.value < frac) ? 1 : 0);
+    }
+
+    private int GetAliveNormalEnemyCountClean()
+    {
+        GetAliveEnemies();
+        return aliveEnemies.Count;
+    }
+
+    private bool IsEnemyPhase1ByLogicalTile(int logicalTile) => logicalTile <= 100;
+    private bool IsBossPhase1ByLogicalTile(int logicalTile) => logicalTile <= 250;
+    private bool IsEnemyPhase3ByLogicalTile(int logicalTile) => logicalTile <= 500;
+
+    private List<GameObject> GetEnemyListByPhase()
+    {
+        return IsEnemyPhase1ByLogicalTile(GetLogicalTileIndex()) ? enemyPrefabsPhase1 : enemyPrefabsPhase2;
+    }
+
+    private void MarkAsRuntimeSpawnedEnemy(GameObject go)
+    {
+        if (go == null) return;
+        if (go == heavyTemplate) return;
+
+        if (go.GetComponent<GroundStreamerSpawnedEnemyMarker>() == null)
+            go.AddComponent<GroundStreamerSpawnedEnemyMarker>();
+    }
 
     public void SetFollowTarget(Transform t)
     {
         followTarget = t;
+
         furthestZ = float.NegativeInfinity;
         lastBuiltFurthestIndex = int.MinValue;
         enemyDespawnZLine = float.NegativeInfinity;
+
+        totalCreatedTiles = 0;
+        timerAccumulator = 0f;
+
+        aliveEnemies.Clear();
+        aliveFoods.Clear();
+        foodDefByInstanceId.Clear();
+
+        blockadeActive = false;
+        blockadeSpawned = false;
+        currentBoss = null;
+        nextBlockadeIndex = Mathf.Max(1, blockadeEveryTiles);
+
+        blockadeMinFrozen = false;
+        frozenMinKeepIdx = 0;
+
+        lastBossPos = Vector3.zero;
+        suppressEnemySpawns = false;
+
+        DestroyBlockadeWall();
     }
 
     void Start()
     {
-        if (groundMaterial == null)
+        nextBlockadeIndex = blockadeEveryTiles;
+    }
+
+    void Update()
+    {
+        Tick(force: false);
+
+        if (followTarget == null) return;
+        if (titlePresentationMode) return;
+
+        if (suppressEnemySpawns)
         {
-            Debug.LogError("GroundStreamer: groundMaterial が未設定です。");
-            enabled = false;
-            return;
-        }
-        if (buildingMaterial1 == null || buildingMaterial2 == null || buildingMaterial3 == null)
-        {
-            Debug.LogError("GroundStreamer: buildingMaterial1/2/3 が全て未設定です。");
-            enabled = false;
-            return;
-        }
-        if (tileLength <= 0f)
-        {
-            Debug.LogError("GroundStreamer: tileLength は 0 より大きい必要があります。");
-            enabled = false;
-            return;
-        }
-        if (tilesAhead < 1)
-        {
-            Debug.LogError("GroundStreamer: tilesAhead は 1 以上が必要です。");
-            enabled = false;
-            return;
-        }
-        if (tilesBehind < 0)
-        {
-            Debug.LogError("GroundStreamer: tilesBehind は 0 以上が必要です。");
-            enabled = false;
+            suppressEnemySpawns = false;
             return;
         }
 
-        if (buildingWidth <= 0f)
+        timerAccumulator += Time.deltaTime;
+        while (true)
         {
-            Debug.LogError("GroundStreamer: buildingWidth は 0 より大きい必要があります。");
-            enabled = false;
-            return;
-        }
-        if (buildingMinHeight <= 0f || buildingMaxHeight <= 0f || buildingMaxHeight < buildingMinHeight)
-        {
-            Debug.LogError("GroundStreamer: buildingMinHeight / buildingMaxHeight の指定が不正です。");
-            enabled = false;
-            return;
-        }
-        if (segmentMinLength <= 0f || segmentMaxLength <= 0f || segmentMaxLength < segmentMinLength)
-        {
-            Debug.LogError("GroundStreamer: segmentMinLength / segmentMaxLength の指定が不正です。");
-            enabled = false;
-            return;
+            float t = GetDifficultyT();
+            float interval = Mathf.Lerp(15f, 2f, t);
+            if (interval < 0.01f) interval = 0.01f;
+
+            if (timerAccumulator < interval) break;
+            timerAccumulator -= interval;
+
+            SpawnEnemiesAtFront(SampleStochasticCount(Mathf.Lerp(1f, 3f, t)));
         }
 
-        // 敵は統合仕様上必須（フォールバック禁止）
-        if (enemyPrefab == null)
+        if (aliveFoods.Count > 0)
         {
-            Debug.LogError("GroundStreamer: enemyPrefab が未設定です。");
-            enabled = false;
-            return;
-        }
-        if (spawnEnemyEveryTiles < 1)
-        {
-            Debug.LogError("GroundStreamer: spawnEnemyEveryTiles は 1 以上が必要です。");
-            enabled = false;
-            return;
+            float time = Time.time;
+            for (int i = aliveFoods.Count - 1; i >= 0; i--)
+            {
+                GameObject f = aliveFoods[i];
+                if (f == null) { aliveFoods.RemoveAt(i); continue; }
+
+                float phase = (f.GetInstanceID() & 1023) * 0.01f;
+
+                Vector3 p = f.transform.position;
+                p.y = foodY + Mathf.Sin(time * 2f + phase) * 0.25f;
+                f.transform.position = p;
+
+                f.transform.Rotate(0f, 90 * Time.deltaTime, 0f, Space.World);
+            }
         }
     }
 
     public void RebuildImmediate()
     {
+        isReloadingWorld = true;
+        suppressEnemySpawns = true;
+
+        DestroyAllRuntimeEnemiesAndBoss();
+        DestroyAllRuntimeFoods();
+
         foreach (var kv in tiles)
-        {
             if (kv.Value != null) Destroy(kv.Value);
-        }
         tiles.Clear();
 
         furthestZ = float.NegativeInfinity;
@@ -174,20 +362,153 @@ public sealed class GroundStreamer : MonoBehaviour
 
         totalCreatedTiles = 0;
         enemyDespawnZLine = float.NegativeInfinity;
+        timerAccumulator = 0f;
+
+        aliveEnemies.Clear();
+        aliveFoods.Clear();
+        foodDefByInstanceId.Clear();
+
+        blockadeActive = false;
+        blockadeSpawned = false;
+        currentBoss = null;
+        nextBlockadeIndex = Mathf.Max(1, blockadeEveryTiles);
+
+        blockadeMinFrozen = false;
+        frozenMinKeepIdx = 0;
+
+        lastBossPos = Vector3.zero;
+
+        DestroyBlockadeWall();
 
         Tick(force: true);
+
+        isReloadingWorld = false;
+    }
+
+    public void ReloadRebuildWorld()
+    {
+        RebuildImmediate();
     }
 
     public void Tick() => Tick(force: false);
 
     private void Tick(bool force)
     {
-        if (!enabled) return;
         if (followTarget == null) return;
 
-        float z = followTarget.position.z;
-        if (z > furthestZ) furthestZ = z;
+        if (titlePresentationMode)
+        {
+            TickTitlePresentation(force);
+            return;
+        }
 
+        if (followTarget.position.z > furthestZ) furthestZ = followTarget.position.z;
+        int furthestIdxRaw = Mathf.FloorToInt(furthestZ / tileLength);
+
+        if (currentBoss != null)
+            lastBossPos = currentBoss.transform.position;
+
+        if (!isReloadingWorld && blockadeActive && blockadeSpawned && currentBoss == null)
+        {
+            if (foods != null && foods.Count > 0)
+                SpawnFoodDropAt(lastBossPos, foods[0]);
+
+            blockadeActive = false;
+            blockadeSpawned = false;
+            nextBlockadeIndex += Mathf.Max(1, blockadeEveryTiles);
+
+            blockadeMinFrozen = false;
+            frozenMinKeepIdx = 0;
+
+            DestroyBlockadeWall();
+        }
+
+        if (!blockadeActive)
+        {
+            int wouldNeedMaxIdx = furthestIdxRaw + tilesAhead;
+            if (wouldNeedMaxIdx >= nextBlockadeIndex)
+            {
+                blockadeActive = true;
+                blockadeSpawned = false;
+
+                blockadeMinFrozen = true;
+                frozenMinKeepIdx = furthestIdxRaw - tilesBehind;
+
+                EnsureBlockadeWall(nextBlockadeIndex);
+            }
+        }
+
+        int furthestIdx = blockadeActive ? Mathf.Min(furthestIdxRaw, nextBlockadeIndex) : furthestIdxRaw;
+
+        if (!force && furthestIdx == lastBuiltFurthestIndex) return;
+        lastBuiltFurthestIndex = furthestIdx;
+
+        int minKeepIdx = furthestIdx - tilesBehind;
+        int maxKeepIdx = furthestIdx + tilesAhead;
+
+        if (blockadeActive)
+            maxKeepIdx = Mathf.Min(maxKeepIdx, nextBlockadeIndex);
+
+        if (blockadeActive && blockadeMinFrozen)
+            minKeepIdx = Mathf.Min(minKeepIdx, frozenMinKeepIdx);
+
+        groundMinZ = minKeepIdx * tileLength;
+        groundMaxZ = (maxKeepIdx + 1) * tileLength;
+
+        enemyDespawnZLine = groundMinZ;
+
+        for (int i = minKeepIdx; i <= maxKeepIdx; i++)
+        {
+            if (!tiles.ContainsKey(i))
+            {
+                GameObject root = CreateTileRoot(i);
+                tiles.Add(i, root);
+                totalCreatedTiles++;
+
+                if (dashboardSpawner != null)
+                    dashboardSpawner.OnTileCreated(i, root.transform, LANE_WIDTH, tileLength, EPS);
+
+                float t = GetDifficultyT();
+                int logicalTile = GetLogicalTileIndexForPhysicalTile(i);
+                float tEvery = Mathf.Clamp01(t / 0.8f);
+                int every = Mathf.Max(1, Mathf.FloorToInt(Mathf.Lerp(15f, 1f, tEvery)));
+
+                if (!suppressEnemySpawns)
+                {
+                    if (logicalTile > 0 && (logicalTile % every) == 0)
+                        SpawnEnemiesForTileIndex(i, SampleStochasticCount(Mathf.Lerp(1f, 4f, t)));
+                }
+
+                if (foods != null && foods.Count > 0)
+                    SpawnFoodForTileIndex(i);
+            }
+        }
+
+        if (!suppressEnemySpawns && blockadeActive && !blockadeSpawned)
+        {
+            SpawnBlockadeEncounter(nextBlockadeIndex);
+            blockadeSpawned = true;
+        }
+
+        if (!blockadeActive && tiles.Count > 0)
+        {
+            var keys = new List<int>(tiles.Keys);
+            for (int k = 0; k < keys.Count; k++)
+            {
+                int i = keys[k];
+                if (i < minKeepIdx)
+                {
+                    GameObject tile = tiles[i];
+                    tiles.Remove(i);
+                    if (tile != null) Destroy(tile);
+                }
+            }
+        }
+    }
+
+    private void TickTitlePresentation(bool force)
+    {
+        if (followTarget.position.z > furthestZ) furthestZ = followTarget.position.z;
         int furthestIdx = Mathf.FloorToInt(furthestZ / tileLength);
 
         if (!force && furthestIdx == lastBuiltFurthestIndex) return;
@@ -196,34 +517,20 @@ public sealed class GroundStreamer : MonoBehaviour
         int minKeepIdx = furthestIdx - tilesBehind;
         int maxKeepIdx = furthestIdx + tilesAhead;
 
-        // タイル i は [i*L, (i+1)*L] を覆う前提
         groundMinZ = minKeepIdx * tileLength;
         groundMaxZ = (maxKeepIdx + 1) * tileLength;
-
-        // 敵の破棄ラインは「タイルの後方保持範囲」と同型で更新
-        // ※ここが“プレイヤーZ判定”ではなく“GroundStreamerの保持窓”に基づくライン
         enemyDespawnZLine = groundMinZ;
 
-        // 生成：最前方基準（後退では増えない）
         for (int i = minKeepIdx; i <= maxKeepIdx; i++)
         {
             if (!tiles.ContainsKey(i))
             {
-                GameObject tileRoot = CreateTileRoot(i);
-                tiles.Add(i, tileRoot);
-
-                // --- タイル新規生成カウント ---
+                GameObject root = CreateTileRoot(i);
+                tiles.Add(i, root);
                 totalCreatedTiles++;
-
-                // --- 10個ごとに敵生成（敵はタイルの子にしない） ---
-                if (totalCreatedTiles % spawnEnemyEveryTiles == 0)
-                {
-                    SpawnEnemiesForTileIndex(i);
-                }
             }
         }
 
-        // 破棄：後方は消す（最前方基準）
         if (tiles.Count > 0)
         {
             var keys = new List<int>(tiles.Keys);
@@ -240,38 +547,317 @@ public sealed class GroundStreamer : MonoBehaviour
         }
     }
 
-    private void SpawnEnemiesForTileIndex(int tileIndex)
+    public bool EnsureHeavyTemplateShell()
     {
-        // タイルのZ範囲：[tileIndex*L, (tileIndex+1)*L]
-        float zMin = tileIndex * tileLength;
-        float zMax = (tileIndex + 1) * tileLength;
+        if (heavyEnemyPrefab == null) return false;
+        if (heavyTemplateLoaded) return true;
+        if (heavyTemplate != null && heavyTemplateCtrl != null) return true;
 
-        float halfLane = LANE_WIDTH * 0.5f;
-        float xMin = -halfLane + enemyXMargin;
-        float xMax = +halfLane - enemyXMargin;
+        heavyTemplate = Instantiate(heavyEnemyPrefab, HIDDEN_POS, Quaternion.identity);
+        heavyTemplate.name = $"HeavyEnemy_TEMPLATE_{Time.frameCount}";
 
-        if (xMax < xMin)
+        heavyTemplateCtrl = heavyTemplate.GetComponent<HeavyEnemyController>();
+        if (heavyTemplateCtrl == null)
         {
-            Debug.LogError("GroundStreamer: enemyXMargin が大きすぎて配置範囲がありません。");
-            enabled = false;
-            return;
+            Debug.LogError("[GroundStreamer] HeavyEnemyController missing on heavyTemplate.");
+            return false;
         }
 
-        for (int n = 0; n < enemiesPerSpawn; n++)
+        return true;
+    }
+
+    public void CompleteHeavyTemplateLoad()
+    {
+        if (heavyTemplate == null || heavyTemplateCtrl == null) return;
+
+        var e = heavyTemplate.GetComponent<Enemy>();
+        if (e != null) e.ResetHP();
+
+        heavyTemplateLoaded = true;
+    }
+
+    private float SampleHeavySpawnKey()
+    {
+        float min = Mathf.Clamp(heavySpawnKeyMin, 0f, 100f);
+        float max = Mathf.Clamp(heavySpawnKeyMax, 0f, 100f);
+        if (max < min) { float tmp = min; min = max; max = tmp; }
+
+        float v = UnityEngine.Random.Range(min, max);
+        return Mathf.Round(Mathf.Clamp(v, 0f, 100f));
+    }
+
+    private void SpawnHeavyInRange(float zMin, float zMax, string namePrefix, int index)
+    {
+        if (!heavyTemplateLoaded) return;
+
+        float half = LANE_WIDTH * 0.5f;
+        float x = UnityEngine.Random.Range(-half + enemyXMargin, +half - enemyXMargin);
+        float z = UnityEngine.Random.Range(zMin, zMax);
+
+        var go = Instantiate(heavyTemplate, new Vector3(x, 0f, z), Quaternion.identity);
+        go.name = $"{namePrefix}_Heavy_{index}";
+
+        MarkAsRuntimeSpawnedEnemy(go);
+        aliveHeavies.Add(go);
+
+        var inst = moveGameSceneController.Instance;
+        var p = inst.player;
+
+        var ctrl = go.GetComponent<HeavyEnemyController>();
+        ctrl.Bind(p, this);
+        ctrl.SetBodyKeyImmediate(SampleHeavySpawnKey());
+
+        var e = go.GetComponent<Enemy>();
+        if (e != null) e.ResetHP();
+
+        var d = go.GetComponent<EnemyStreamDespawn>();
+        if (d == null) d = go.AddComponent<EnemyStreamDespawn>();
+        d.Initialize(this);
+    }
+
+    private void EnsureBlockadeWall(int blockadeTileIndex)
+    {
+        if (blockadeWallMaterial == null) return;
+        if (blockadeWallGO != null) return;
+
+        blockadeWallGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        blockadeWallGO.name = $"BlockadeWall_{blockadeTileIndex}";
+
+        var col = blockadeWallGO.GetComponent<Collider>();
+        if (col != null) Destroy(col);
+
+        blockadeWallGO.transform.position = new Vector3(
+            0f,
+            blockadeWallY + blockadeWallHeight * 0.5f,
+            (blockadeTileIndex + 1) * tileLength + blockadeWallZOffset
+        );
+
+        blockadeWallGO.transform.rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
+        blockadeWallGO.transform.localScale = new Vector3(LANE_WIDTH * 2f, blockadeWallHeight, 1f);
+
+        var mr = blockadeWallGO.GetComponent<MeshRenderer>();
+        mr.sharedMaterial = blockadeWallMaterial;
+    }
+
+    private void DestroyBlockadeWall()
+    {
+        if (blockadeWallGO != null)
         {
-            float x = Random.Range(xMin, xMax);
-            float zz = Random.Range(zMin + EPS, zMax - EPS);
+            Destroy(blockadeWallGO);
+            blockadeWallGO = null;
+        }
+    }
 
-            Vector3 pos = new Vector3(x, enemyYOffset, zz);
+    private void SpawnBlockadeEncounter(int blockadeTileIndex)
+    {
+        float zMin = blockadeTileIndex * tileLength + EPS;
+        float zMax = (blockadeTileIndex + 1) * tileLength - EPS;
 
-            // ★親にしない：地面と寿命を共通化しない
-            GameObject e = Instantiate(enemyPrefab, pos, Quaternion.identity);
-            e.name = $"Enemy_{tileIndex}_{n}";
+        SpawnNormalEnemiesInRange(
+            Mathf.FloorToInt(Mathf.Lerp(1f, 30f, GetDifficultyT())),
+            zMin,
+            zMax,
+            $"Enemy_BossAdd_{blockadeTileIndex}"
+        );
 
-            // 破棄ライン追従コンポーネント（同ファイル末尾）
+        List<GameObject> bossList = IsBossPhase1ByLogicalTile(GetLogicalTileIndexForPhysicalTile(blockadeTileIndex))
+            ? bossPrefabsPhase1
+            : bossPrefabsPhase2;
+
+        GameObject bossPrefab = bossList[UnityEngine.Random.Range(0, bossList.Count)];
+
+        currentBoss = Instantiate(
+            bossPrefab,
+            new Vector3(0f, 0f, Mathf.Lerp(zMin, zMax, 0.5f)),
+            Quaternion.identity
+        );
+
+        MarkAsRuntimeSpawnedEnemy(currentBoss);
+
+        var bossEnemy = currentBoss.GetComponent<Enemy>();
+        if (bossEnemy != null) bossEnemy.MarkAsSpawned();
+
+        currentBoss.name = $"Boss_{blockadeTileIndex}_{Time.frameCount}";
+    }
+
+    private void RegisterEnemyIfNeeded(GameObject e)
+    {
+        if (e == null) return;
+        if (e == heavyTemplate) return;
+
+        if (!aliveEnemies.Contains(e))
+            aliveEnemies.Add(e);
+    }
+
+    private void SpawnEnemiesAtFront(int requestedCount)
+    {
+        if (requestedCount <= 0) return;
+
+        float zMax = groundMaxZ;
+        float zMin = Mathf.Max(groundMinZ, zMax - tileLength);
+
+        if (blockadeActive)
+        {
+            float wallZ = (nextBlockadeIndex + 1) * tileLength + blockadeWallZOffset;
+            zMax = Mathf.Min(zMax, wallZ - EPS);
+            zMin = Mathf.Min(zMin, zMax - EPS);
+        }
+
+        if (zMax <= zMin + EPS) return;
+
+        SpawnNormalEnemiesInRange(requestedCount, zMin + EPS, zMax - EPS, $"Enemy_Front_{Time.frameCount}");
+    }
+
+    private void SpawnEnemiesForTileIndex(int tileIndex, int requestedCount)
+    {
+        if (requestedCount <= 0) return;
+
+        SpawnNormalEnemiesInRange(
+            requestedCount,
+            tileIndex * tileLength + EPS,
+            (tileIndex + 1) * tileLength - EPS,
+            $"Enemy_{tileIndex}"
+        );
+    }
+
+    private void SpawnNormalEnemiesInRange(int requestedCount, float zMin, float zMax, string namePrefix)
+    {
+        if (requestedCount <= 0) return;
+        if (zMax <= zMin + EPS) return;
+
+        int logical = GetLogicalTileIndex();
+        int alive = GetAliveNormalEnemyCountClean();
+
+        int cap = Mathf.RoundToInt(Mathf.Lerp(10f, 100f, Mathf.Clamp01(logical / (float)DIFFICULTY_MAX_TILE)));
+        int canSpawn = Mathf.Max(0, cap - alive);
+        int spawnCount = Mathf.Min(requestedCount, canSpawn);
+        if (spawnCount <= 0) return;
+
+        List<GameObject> list = GetEnemyListByPhase();
+
+        bool phase2 = !IsEnemyPhase1ByLogicalTile(GetLogicalTileIndex());
+        bool phase3 = !IsEnemyPhase3ByLogicalTile(GetLogicalTileIndex());
+        int listCount = list.Count;
+
+        float heavyChance = phase3 ? (1f / (10f * (listCount + 1f))) : 0f;
+
+        for (int i = 0; i < spawnCount; i++)
+        {
+            if (phase2 && phase3 && UnityEngine.Random.value < heavyChance)
+            {
+                SpawnHeavyInRange(zMin, zMax, namePrefix, i);
+                continue;
+            }
+
+            int r = UnityEngine.Random.Range(0, listCount);
+            GameObject prefab = list[r];
+
+            GameObject e = Instantiate(
+                prefab,
+                new Vector3(
+                    UnityEngine.Random.Range(-LANE_WIDTH * 0.5f + enemyXMargin, +LANE_WIDTH * 0.5f - enemyXMargin),
+                    0f,
+                    UnityEngine.Random.Range(zMin, zMax)
+                ),
+                Quaternion.identity
+            );
+
+            MarkAsRuntimeSpawnedEnemy(e);
+
+            var enemy = e.GetComponent<Enemy>();
+            if (enemy != null) enemy.MarkAsSpawned();
+
+            e.name = $"{namePrefix}_{i}";
+
             var d = e.GetComponent<EnemyStreamDespawn>();
             if (d == null) d = e.AddComponent<EnemyStreamDespawn>();
-            d.Initialize(this, enemyDespawnDelaySeconds, enemyExtraBehindDistance);
+            d.Initialize(this);
+
+            RegisterEnemyIfNeeded(e);
+        }
+    }
+
+    private void SpawnFoodDropAt(Vector3 worldPos, FoodDef def)
+    {
+        GameObject go = new GameObject($"Food_BossDrop_{Time.frameCount}", typeof(SpriteRenderer));
+        float s = Mathf.Max(0.01f, def.foodScale);
+
+        go.transform.position = new Vector3(worldPos.x, foodY, worldPos.z);
+        go.transform.localScale = Vector3.one * s;
+
+        if (foodLayer >= 0 && foodLayer <= 31) go.layer = foodLayer;
+
+        var sr = go.GetComponent<SpriteRenderer>();
+        sr.sprite = def.sprite;
+        sr.sortingOrder = 1000;
+
+        var col = go.AddComponent<SphereCollider>();
+        col.isTrigger = true;
+        col.radius = 50f * s;
+
+        var rb = go.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+        aliveFoods.Add(go);
+        foodDefByInstanceId[go.GetInstanceID()] = def;
+    }
+
+    private FoodDef ChooseFoodDefForSpawn()
+    {
+        bool useRare = rareFoods != null
+            && rareFoods.Count > 0
+            && UnityEngine.Random.value < 0.01f;
+
+        if (useRare)
+        {
+            return rareFoods[UnityEngine.Random.Range(0, rareFoods.Count)];
+        }
+
+        int pickMin = (foods.Count >= 2) ? 1 : 0;
+        return foods[UnityEngine.Random.Range(pickMin, foods.Count)];
+    }
+
+    private void SpawnFoodForTileIndex(int tileIndex)
+    {
+        int count = UnityEngine.Random.Range(0, 4);
+
+        for (int c = 0; c < count; c++)
+        {
+            FoodDef def = ChooseFoodDefForSpawn();
+
+            GameObject go = new GameObject($"Food_{tileIndex}_{Time.frameCount}_{c}", typeof(SpriteRenderer));
+            float s = Mathf.Max(0.01f, def.foodScale);
+
+            go.transform.position = new Vector3(
+                UnityEngine.Random.Range(-LANE_WIDTH * 0.5f + 0.6f, +LANE_WIDTH * 0.5f - 0.6f),
+                foodY,
+                UnityEngine.Random.Range(tileIndex * tileLength + EPS, (tileIndex + 1) * tileLength - EPS)
+            );
+
+            go.transform.localScale = Vector3.one * s;
+
+            if (foodLayer >= 0 && foodLayer <= 31) go.layer = foodLayer;
+
+            var sr = go.GetComponent<SpriteRenderer>();
+            sr.sprite = def.sprite;
+            sr.sortingOrder = 1000;
+
+            var col = go.AddComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = 50f * s;
+
+            var rb = go.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+            if (tiles.TryGetValue(tileIndex, out var root) && root != null)
+                go.transform.SetParent(root.transform, true);
+
+            aliveFoods.Add(go);
+            foodDefByInstanceId[go.GetInstanceID()] = def;
         }
     }
 
@@ -280,11 +866,9 @@ public sealed class GroundStreamer : MonoBehaviour
         GameObject root = new GameObject($"GroundTile_{index}");
         root.transform.position = new Vector3(0f, 0f, index * tileLength);
 
-        // ---- ground mesh ----
         {
             var groundGO = new GameObject("Ground");
             groundGO.transform.SetParent(root.transform, false);
-            groundGO.transform.localPosition = Vector3.zero;
 
             var mf = groundGO.AddComponent<MeshFilter>();
             var mr = groundGO.AddComponent<MeshRenderer>();
@@ -293,15 +877,13 @@ public sealed class GroundStreamer : MonoBehaviour
             mf.sharedMesh = BuildGroundMesh(LANE_WIDTH, tileLength);
         }
 
-        // ---- buildings ----
         if (buildingsEnabled)
         {
             var buildingsGO = new GameObject("Buildings");
             buildingsGO.transform.SetParent(root.transform, false);
-            buildingsGO.transform.localPosition = Vector3.zero;
 
-            CreateBuildingsForSide(buildingsGO.transform, index, sideSign: -1f); // left
-            CreateBuildingsForSide(buildingsGO.transform, index, sideSign: +1f); // right
+            CreateBuildingsForSide(buildingsGO.transform, index, -1f);
+            CreateBuildingsForSide(buildingsGO.transform, index, +1f);
         }
 
         return root;
@@ -309,11 +891,8 @@ public sealed class GroundStreamer : MonoBehaviour
 
     private void CreateBuildingsForSide(Transform parent, int tileIndex, float sideSign)
     {
-        // 道の端（内側面）を x = ±LANE_WIDTH/2 に合わせる
-        float innerEdgeX = sideSign * (LANE_WIDTH * 0.5f);
-        float cx = innerEdgeX + sideSign * (buildingWidth * 0.5f);
+        float cx = sideSign * (LANE_WIDTH * 0.5f) + sideSign * (buildingWidth * 0.5f);
 
-        // タイル内Z範囲 [0, tileLength] を「重ならず」「隙間なし」で分割してキューブ配置
         float z0 = 0f;
         int segId = 0;
 
@@ -321,33 +900,23 @@ public sealed class GroundStreamer : MonoBehaviour
         {
             float remaining = tileLength - z0;
 
-            float segLen;
-            if (remaining <= segmentMaxLength + EPS)
-            {
-                segLen = remaining;
-            }
-            else
-            {
-                float candidate = Random.Range(segmentMinLength, segmentMaxLength);
-                segLen = Mathf.Clamp(candidate, segmentMinLength, segmentMaxLength);
+            float segLen = (remaining <= segmentMaxLength + EPS)
+                ? remaining
+                : Mathf.Min(
+                    Mathf.Clamp(UnityEngine.Random.Range(segmentMinLength, segmentMaxLength), segmentMinLength, segmentMaxLength),
+                    remaining
+                );
 
-                if (segLen > remaining) segLen = remaining;
-            }
-
-            float cz = z0 + segLen * 0.5f;
-
-            float h = Random.Range(buildingMinHeight, buildingMaxHeight);
+            float h = UnityEngine.Random.Range(buildingMinHeight, buildingMaxHeight);
 
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cube.name = $"B_{tileIndex}_{(sideSign < 0f ? "L" : "R")}_{segId}";
             cube.transform.SetParent(parent, false);
-
             cube.transform.localScale = new Vector3(buildingWidth, h, segLen);
-            cube.transform.localPosition = new Vector3(cx, h * 0.5f, cz);
+            cube.transform.localPosition = new Vector3(cx, h * 0.5f, z0 + segLen * 0.5f);
 
-            Material chosen = ChooseBuildingMaterial();
             var mr = cube.GetComponent<MeshRenderer>();
-            if (mr != null) mr.sharedMaterial = chosen;
+            if (mr != null) mr.sharedMaterial = ChooseBuildingMaterial();
 
             z0 += segLen;
             segId++;
@@ -356,7 +925,7 @@ public sealed class GroundStreamer : MonoBehaviour
 
     private Material ChooseBuildingMaterial()
     {
-        int r = Random.Range(0, 3);
+        int r = UnityEngine.Random.Range(0, 3);
         if (r == 0) return buildingMaterial1;
         if (r == 1) return buildingMaterial2;
         return buildingMaterial3;
@@ -374,16 +943,8 @@ public sealed class GroundStreamer : MonoBehaviour
             new Vector3( hw, 0f, length),
         };
 
-        int[] t = new int[6]
-        {
-            0, 2, 1,
-            2, 3, 1
-        };
-
-        Vector3[] n = new Vector3[4]
-        {
-            Vector3.up, Vector3.up, Vector3.up, Vector3.up
-        };
+        int[] t = new int[6] { 0, 2, 1, 2, 3, 1 };
+        Vector3[] n = new Vector3[4] { Vector3.up, Vector3.up, Vector3.up, Vector3.up };
 
         Vector2[] uv = new Vector2[4]
         {
@@ -402,55 +963,78 @@ public sealed class GroundStreamer : MonoBehaviour
         m.RecalculateBounds();
         return m;
     }
+
+    public int GetTotalCreatedTiles()
+    {
+        return totalCreatedTiles - 3;
+    }
+
+    private void DestroyAllRuntimeEnemiesAndBoss()
+    {
+        var spawned = UnityEngine.Object.FindObjectsByType<GroundStreamerSpawnedEnemyMarker>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        for (int i = 0; i < spawned.Length; i++)
+        {
+            var marker = spawned[i];
+            if (marker == null) continue;
+
+            GameObject go = marker.gameObject;
+            if (go == null) continue;
+            if (go == heavyTemplate) continue;
+
+            if (go.activeSelf) go.SetActive(false);
+            Destroy(go);
+        }
+
+        aliveEnemies.Clear();
+        aliveHeavies.Clear();
+        currentBoss = null;
+    }
+
+    private void DestroyAllRuntimeFoods()
+    {
+        for (int i = aliveFoods.Count - 1; i >= 0; i--)
+        {
+            var f = aliveFoods[i];
+            if (f != null) Destroy(f);
+        }
+        aliveFoods.Clear();
+        foodDefByInstanceId.Clear();
+    }
+    public int GetRetryRestartDistance()
+    {
+        int current = GetTotalCreatedTiles() + startTileIndexPublic;
+        if (current <= 0) return 0;
+
+        return ((current - 1) / 50) * 50;
+    }
 }
 
-/// <summary>
-/// 地面タイルとは独立して敵を削除するためのコンポーネント。
-/// - GroundStreamer が算出する「後方破棄ライン」を参照する
-/// - ラインを越えて十分後方に抜け、指定秒数連続で後方に居たら Destroy
-/// </summary>
+public sealed class GroundStreamerSpawnedEnemyMarker : MonoBehaviour
+{
+}
+
 public sealed class EnemyStreamDespawn : MonoBehaviour
 {
     private GroundStreamer streamer;
-    private float delaySeconds;
-    private float extraBehind;
-
     private bool behindStarted;
     private float behindTimer;
 
-    public void Initialize(GroundStreamer streamer, float delaySeconds, float extraBehindDistance)
+    public void Initialize(GroundStreamer streamer)
     {
-        if (streamer == null)
-        {
-            Debug.LogError("EnemyStreamDespawn: streamer が null です。");
-            enabled = false;
-            return;
-        }
-
         this.streamer = streamer;
-        this.delaySeconds = Mathf.Max(0f, delaySeconds);
-        this.extraBehind = Mathf.Max(0f, extraBehindDistance);
-
         behindStarted = false;
         behindTimer = 0f;
     }
 
     void Update()
     {
-        if (!enabled) return;
-        if (streamer == null)
-        {
-            Debug.LogError("EnemyStreamDespawn: streamer 参照が失われました。");
-            enabled = false;
-            return;
-        }
+        if (streamer == null) return;
 
-        float lineZ = streamer.GetEnemyDespawnZLine() - extraBehind;
-
-        // 「GroundStreamerの保持窓」から十分外へ抜けたかどうか
-        bool isBehind = transform.position.z < lineZ;
-
-        if (isBehind)
+        if (transform.position.z < streamer.GetEnemyDespawnZLine())
         {
             if (!behindStarted)
             {
@@ -459,14 +1043,30 @@ public sealed class EnemyStreamDespawn : MonoBehaviour
             }
 
             behindTimer += Time.deltaTime;
-            if (behindTimer >= delaySeconds)
+
+            if (behindTimer >= 1.0f)
             {
-                Destroy(gameObject);
+                float zMax = streamer.GetGroundMaxZ();
+                float zMin = Mathf.Max(streamer.GetGroundMinZ(), zMax - streamer.tileLength);
+
+                float x = UnityEngine.Random.Range(
+                    -GroundStreamer.LANE_WIDTH * 0.5f + streamer.enemyXMargin,
+                    +GroundStreamer.LANE_WIDTH * 0.5f - streamer.enemyXMargin
+                );
+
+                float z = UnityEngine.Random.Range(zMin + GroundStreamer.EPS, zMax - GroundStreamer.EPS);
+
+                bool isHeavy = (GetComponent<HeavyEnemyController>() != null);
+                float y = isHeavy ? transform.position.y : 0f;
+
+                transform.position = new Vector3(x, y, z);
+
+                behindStarted = false;
+                behindTimer = 0f;
             }
         }
         else
         {
-            // 一度戻ってきたらリセット（瞬間的な越えで消えない）
             behindStarted = false;
             behindTimer = 0f;
         }

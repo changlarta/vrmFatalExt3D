@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Mathematics;
 
 public interface IDamageable
 {
@@ -20,17 +21,19 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
     public TextAsset character;
     public GameObject vrmGameObject;
 
+    [SerializeField] private ClickShootFromCenter clickShootFromCenter;
+
     [Header("Camera (required, no fallback)")]
-    [SerializeField] private Camera playerCamera;                 // 必須（Camera.main は使わない）
-    [SerializeField] private moveGameSceneCamera cameraController; // 必須（揺れ等に使う）
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private moveGameSceneCamera cameraController;
 
     [SerializeField] private bool moveInWorldSpace = true;
 
+    [SerializeField] private GroundStreamer groundStreamer;
+    [SerializeField] private PlayerImage playerImage;
+
     private VrmToController ctr1;
 
-    // =========================================================
-    // Movement state
-    // =========================================================
     private float clampXHalf = 50f;
     private float clampXMargin = 0f;
 
@@ -39,6 +42,8 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
     private float groundMaxZ = 0f;
 
     private bool boundsReady = false;
+    private bool gameplayEnabled = false;
+    private bool isGameOver = false;
 
     private Vector3 moveDir = Vector3.zero;
     private bool dashRequested = true;
@@ -65,24 +70,24 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
     private Vector3 airVel = Vector3.zero;
     private float airSpeedFactor = 0f;
 
-    // =========================================================
-    // Fatigue
-    // =========================================================
+    private enum ForcedMoveState { None, ZForwardBurst }
+    private ForcedMoveState forcedMoveState = ForcedMoveState.None;
+
+    [Header("Forced Z Burst")]
+    [SerializeField] private float forcedZBurstSpeed = 20f;
+    [SerializeField] private float forcedZBurstSeconds = 1f;
+
+    private float forcedMoveTimer = 0f;
+
     [Header("Fatigue (0..100)")]
     [Range(0f, 100f)] public float fatigue = 0f;
     public float fatigueRecoverPerSec = 25f;
-    private bool exhausted = false;
+    public bool exhausted = false;
 
-    // =========================================================
-    // BodyKey (source of truth)
-    // =========================================================
     public float currentBodyKey = 0f;
     private float lastObservedCurrentBodyKey = 0f;
     private bool isWritingCurrentBodyKeyFromAnim = false;
 
-    // =========================================================
-    // Damage / Invincible (player side)
-    // =========================================================
     [Header("HP")]
     public int maxHP = 100;
     public int CurrentHP = 0;
@@ -90,7 +95,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
     [Header("Hit reaction")]
     public float hitStunSeconds = 0.5f;
     public float invincibleSeconds = 2.0f;
-    public float knockbackDistance = 0.6f;
     public float knockbackDuration = 0.12f;
     public float blinkInterval = 0.1f;
 
@@ -104,9 +108,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
     public Transform VrmTransform => vrmGameObject != null ? vrmGameObject.transform : null;
 
-    // =========================================================
-    // Manager -> Player (no fallback)
-    // =========================================================
     public void SetWorldBounds(float laneHalfExtent, float xMargin, bool zClampEnabled, float minZ, float maxZ)
     {
         if (laneHalfExtent < 0f) { Debug.LogError("[PlayerController] laneHalfExtent < 0"); enabled = false; return; }
@@ -122,26 +123,147 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         boundsReady = true;
     }
 
-    public void EnsureInitialized()
+    public void SetGameplayEnabled(bool enabledValue)
     {
-        if (initialized) return;
+        gameplayEnabled = enabledValue;
 
-        if (vrmGameObject == null) { Debug.LogError("[PlayerController] vrmGameObject is null."); enabled = false; return; }
-        if (character == null) { Debug.LogError("[PlayerController] character is null."); enabled = false; return; }
+        if (!gameplayEnabled)
+        {
+            moveDir = Vector3.zero;
+            dashRequested = false;
+            jumpQueued = false;
+            forcedMoveState = ForcedMoveState.None;
+            forcedMoveTimer = 0f;
+            controlLockTimer = 0f;
+        }
+    }
+
+    public void SetCharacterVisible(bool visible)
+    {
+        SetVisualChildrenActive(visible);
+    }
+
+    public void SetTransformForTitle(Vector3 position, Quaternion rotation)
+    {
+        if (vrmGameObject == null) return;
+
+        Transform tr = vrmGameObject.transform;
+        tr.position = position;
+        tr.rotation = rotation;
+    }
+
+    public IEnumerator CoLoadCharacterOnce()
+    {
+        if (initialized) yield break;
+
+        if (vrmGameObject == null) { Debug.LogError("[PlayerController] vrmGameObject is null."); enabled = false; yield break; }
+        if (character == null) { Debug.LogError("[PlayerController] character is null."); enabled = false; yield break; }
 
         ctr1 = vrmGameObject.GetComponent<VrmToController>();
-        if (ctr1 == null) { Debug.LogError("[PlayerController] VrmToController missing on vrmGameObject."); enabled = false; return; }
+        if (ctr1 == null) { Debug.LogError("[PlayerController] VrmToController missing on vrmGameObject."); enabled = false; yield break; }
 
-        if (playerCamera == null) { Debug.LogError("[PlayerController] playerCamera is null."); enabled = false; return; }
-        if (cameraController == null) { Debug.LogError("[PlayerController] cameraController is null."); enabled = false; return; }
+        if (playerCamera == null) { Debug.LogError("[PlayerController] playerCamera is null."); enabled = false; yield break; }
+        if (cameraController == null) { Debug.LogError("[PlayerController] cameraController is null."); enabled = false; yield break; }
 
         ctr1.blushValue = 0.5f;
+        ctr1.meshPullEnabled = false;
         ctr1.ReloadFromBytes(character.bytes, BodyVariant.Cooking, 100, ctr1.bodyKey, 30, 0.2f);
+
+        while (!ctr1.IsReady) yield return null;
 
         currentBodyKey = Mathf.Clamp(ctr1.bodyKey, 0f, 100f);
         lastObservedCurrentBodyKey = currentBodyKey;
         ApplyBodyKey(currentBodyKey);
 
+        HardResetRuntimeState();
+
+        boundsReady = false;
+        gameplayEnabled = false;
+
+        initialized = true;
+    }
+
+    public void ResetForReload()
+    {
+        if (!initialized) return;
+
+        if (invincibleCo != null) StopCoroutine(invincibleCo);
+        if (knockbackCo != null) StopCoroutine(knockbackCo);
+
+        invincibleCo = null;
+        knockbackCo = null;
+
+        HardResetRuntimeState();
+
+        Transform tr = vrmGameObject.transform;
+        tr.position = new Vector3(0f, 20f, 0f);
+        tr.rotation = Quaternion.identity;
+
+        boundsReady = false;
+    }
+
+    public void StartForcedZBurst()
+    {
+        if (!initialized) return;
+        if (!gameplayEnabled) return;
+        if (vrmGameObject == null) return;
+        if (jumpState != JumpState.None) return;
+        if (forcedMoveState != ForcedMoveState.None) return;
+
+        AudioManager.Instance.PlaySE("dash");
+
+        forcedMoveState = ForcedMoveState.ZForwardBurst;
+        forcedMoveTimer = 0f;
+
+        moveDir = Vector3.zero;
+        dashRequested = false;
+        jumpQueued = false;
+
+        airVel = Vector3.zero;
+        airSpeedFactor = 0f;
+
+        movingLogTimer = 0f;
+        landingShakeFired = false;
+
+        moveDecayTimer = 0f;
+    }
+
+    private void TickForcedMove(float dt)
+    {
+        if (forcedMoveState == ForcedMoveState.None) return;
+        if (vrmGameObject == null) { forcedMoveState = ForcedMoveState.None; return; }
+
+        forcedMoveTimer += dt;
+
+        Transform tr = vrmGameObject.transform;
+
+        Vector3 p = tr.position;
+        p += Vector3.forward * forcedZBurstSpeed * dt;
+
+        float y = p.y;
+        p = ClampToBounds(p);
+        p.y = y;
+        tr.position = p;
+
+        Vector3 look = Vector3.forward;
+        look.y = 0f;
+        if (look.sqrMagnitude > 1e-12f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(look, Vector3.up);
+            tr.rotation = Quaternion.Slerp(tr.rotation, targetRot, 20f * dt);
+        }
+
+        ctr1.ApplyEvent(ctr1.bodyKey > 25f ? "moving_fly2" : "moving_fly1");
+
+        if (forcedMoveTimer >= forcedZBurstSeconds)
+        {
+            forcedMoveState = ForcedMoveState.None;
+            forcedMoveTimer = 0f;
+        }
+    }
+
+    private void HardResetRuntimeState()
+    {
         moveDir = Vector3.zero;
         dashRequested = true;
         jumpQueued = false;
@@ -164,7 +286,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         bodyKeyElapsed = 0f;
         bodyKeyDuration = 0f;
 
-        fatigue = Mathf.Clamp(fatigue, 0f, 100f);
+        fatigue = 0f;
         exhausted = false;
 
         CurrentHP = Mathf.Max(1, maxHP);
@@ -172,24 +294,36 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         invincible = false;
         controlLockTimer = 0f;
 
-        initialized = true;
+        forcedMoveState = ForcedMoveState.None;
+        forcedMoveTimer = 0f;
+
+        isGameOver = false;
+        SetVisualChildrenActive(true);
+
+        if (clickShootFromCenter != null)
+        {
+            clickShootFromCenter.ResetFoodAttributeFlags();
+        }
     }
 
     private void Update()
     {
         if (!initialized) return;
-        if (!boundsReady)
-        {
-            Debug.LogError("[PlayerController] bounds not supplied. Call SetWorldBounds() from manager.");
-            enabled = false;
-            return;
-        }
+        if (!gameplayEnabled) return;
+        if (!boundsReady) return;
 
         float dt = Time.deltaTime;
 
         DetectAndApplyExternalBodyKeyWrite();
 
-        // ---- input (locked if hitstun) ----
+        if (forcedMoveState != ForcedMoveState.None)
+        {
+            AdvanceBodyKeyAnimation(dt);
+            TickForcedMove(dt);
+            ForceClampNow();
+            return;
+        }
+
         if (controlLockTimer > 0f)
         {
             controlLockTimer -= dt;
@@ -247,7 +381,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
             if (!moveInWorldSpace)
             {
-                // moveInWorldSpace=false の挙動を維持。ただし vrmGameObject が必須。
                 worldDir = vrmGameObject.transform.TransformDirection(worldDir);
                 worldDir.y = 0f;
                 if (worldDir.sqrMagnitude <= 1e-12f)
@@ -269,9 +402,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         ForceClampNow();
     }
 
-    // =========================================================
-    // External write detect
-    // =========================================================
     private void DetectAndApplyExternalBodyKeyWrite()
     {
         if (isWritingCurrentBodyKeyFromAnim) return;
@@ -289,9 +419,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         }
     }
 
-    // =========================================================
-    // Clamp
-    // =========================================================
     private Vector3 ClampToBounds(Vector3 pos)
     {
         float halfX = Mathf.Max(0f, clampXHalf - clampXMargin);
@@ -310,9 +437,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         t.position = ClampToBounds(t.position);
     }
 
-    // =========================================================
-    // Movement helpers
-    // =========================================================
     private void SetMoveDirection(Vector3 worldDir)
     {
         worldDir.y = 0f;
@@ -328,7 +452,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
     {
         float bkTarget = GetBodyKeyTargetForFatigue();
         float bk01 = Mathf.Clamp01(bkTarget / 100f);
-        float bodyKeyMult = Mathf.Lerp(0.01f, 1.5f, bk01);
+        float bodyKeyMult = Mathf.Lerp(0.01f, 0.8f, bk01);
 
         bool hasMoveInput = moveDir.sqrMagnitude > 1e-8f;
 
@@ -425,7 +549,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
         float bk = ctr1.bodyKey / 100f;
         float t = 1f - bk;
-        float baseSpeed = 0.08f - 0.07f * (1f - (t * t * t));
+        float baseSpeed = 0.08f - 0.072f * (1f - (t * t));
 
         bool dash = dashRequested;
 
@@ -465,7 +589,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
                         if (inBox)
                         {
-                            cameraController.TriggerShake();
+                            cameraController.TriggerShake(1 + 0.5f * Mathf.Max(0, (currentBodyKey - 25) / 75));
                         }
                     }
                 }
@@ -490,7 +614,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         }
         else
         {
-            float baseSpeed2 = 0.64f - 0.4f * (1f - (t * t * t));
+            float baseSpeed2 = 0.64f - 0.54f * (1f - (t * t));
             float airBaseSpeed = baseSpeed2 * speedx;
 
             if (jumpState == JumpState.Rising)
@@ -520,7 +644,8 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
                 if (airVel.sqrMagnitude < 1e-10f)
                 {
-                    Vector3 fwd = tr.forward; fwd.y = 0f;
+                    Vector3 fwd = tr.forward;
+                    fwd.y = 0f;
                     if (fwd.sqrMagnitude <= 1e-12f)
                     {
                         Debug.LogError("[PlayerController] tr.forward invalid during air.");
@@ -582,7 +707,7 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
             {
                 var hv = Input.GetKey(KeyCode.Space) ? 1f : 0f;
                 float uu = (airSpeedFactor + 1f) * 0.5f;
-                float gravityMul = Mathf.Lerp(0.01f, 0.5f, uu * (1f - (t * t * t)));
+                float gravityMul = Mathf.Lerp(0.01f, 1f, uu * (1f - (t * t * t)));
 
                 fallVel -= 10f * gravityMul * dt + hv;
                 pos.y += fallVel * dt;
@@ -610,9 +735,9 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
                             if (inBox)
                             {
+                                fatigue += currentBodyKey / 100 * 20;
                                 ctr1.ApplyEvent("moving_walk2");
-                                cameraController.TriggerShake();
-                                AudioManager.Instance.PlaySE("tap3");
+                                cameraController.TriggerShake(4 * (1 + Mathf.Max(0, (currentBodyKey - 25) / 75)));
                             }
                         }
                     }
@@ -640,9 +765,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         }
     }
 
-    // =========================================================
-    // bodyKey API
-    // =========================================================
     private void AddBodyKeyDelta(float delta)
     {
         float baseValue = bodyKeyAnimating ? bodyKeyTarget : currentBodyKey;
@@ -701,17 +823,20 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         ctr1.bustKey = 20f + 80f * (v / 100f);
     }
 
-    // =========================================================
-    // Damage (no cooldown on dealer, all on player)
-    // =========================================================
-    public bool CanTakeDamage => !invincible && CurrentHP > 0;
+    public bool CanTakeDamage => gameplayEnabled && !invincible && !isGameOver && CurrentHP > 0;
 
     public void ApplyDamage(DamageInfo info)
     {
         if (!CanTakeDamage) return;
         if (info.amount <= 0) { Debug.LogError("[PlayerController] damage <= 0 is invalid."); enabled = false; return; }
 
-        CurrentHP = Mathf.Max(0, CurrentHP - info.amount);
+        CurrentHP = Mathf.Max(0, CurrentHP - (info.amount / (int)(1 + 0.5 * currentBodyKey / 100)));
+
+        if (CurrentHP <= 0)
+        {
+            EnterGameOver();
+            return;
+        }
 
         controlLockTimer = Mathf.Max(controlLockTimer, hitStunSeconds);
 
@@ -720,6 +845,36 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
 
         if (invincibleCo != null) StopCoroutine(invincibleCo);
         invincibleCo = StartCoroutine(CoInvincibleBlink(invincibleSeconds));
+    }
+
+    private void EnterGameOver()
+    {
+        if (isGameOver) return;
+
+        isGameOver = true;
+
+        if (invincibleCo != null) StopCoroutine(invincibleCo);
+        if (knockbackCo != null) StopCoroutine(knockbackCo);
+
+        invincibleCo = null;
+        knockbackCo = null;
+        invincible = false;
+
+        moveDir = Vector3.zero;
+        dashRequested = false;
+        jumpQueued = false;
+
+        airVel = Vector3.zero;
+        airSpeedFactor = 0f;
+
+        forcedMoveState = ForcedMoveState.None;
+        forcedMoveTimer = 0f;
+        controlLockTimer = 0f;
+
+        SetCharacterVisible(false);
+        SetGameplayEnabled(false);
+
+        moveGameSceneController.Instance.OnPlayerGameOver();
     }
 
     private IEnumerator CoKnockback(Vector3 attackerWorldPos)
@@ -732,14 +887,13 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         if (dir.sqrMagnitude <= 1e-12f)
         {
             Debug.LogError("[PlayerController] knockback dir is zero (attackerWorldPos == playerPos).");
-            enabled = false;
             yield break;
         }
 
         Vector3 push = dir.normalized;
 
         Vector3 start = tr.position;
-        Vector3 target = start + push * knockbackDistance;
+        Vector3 target = start + push * 20f / Mathf.Max(1, 1 + 19 * (currentBodyKey / 100));
 
         float dur = Mathf.Max(1e-4f, knockbackDuration);
         float t = 0f;
@@ -749,8 +903,14 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
             t += Time.deltaTime;
             float u = Mathf.Clamp01(t / dur);
 
-            tr.position = Vector3.Lerp(start, target, u);
-            tr.position = ClampToBounds(tr.position);
+            Vector3 p = Vector3.Lerp(start, target, u);
+
+            p.y = tr.position.y;
+
+            p = ClampToBounds(p);
+            p.y = tr.position.y;
+
+            tr.position = p;
 
             yield return null;
         }
@@ -758,7 +918,6 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         tr.position = ClampToBounds(tr.position);
     }
 
-    // ---- SetActive blink (max 2 direct children; no caching; childCount is allowed) ----
     private void SetVisualChildrenActive(bool active)
     {
         if (vrmGameObject == null) return;
@@ -783,23 +942,87 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         float elapsed = 0f;
         bool visible = false;
 
-        // まず消す
         SetVisualChildrenActive(false);
 
         while (elapsed < seconds)
         {
             elapsed += interval;
             visible = !visible;
-
-            // 要求通り：状態保存なし。毎回 childCount を見て 2 子をそのまま切替。
             SetVisualChildrenActive(visible);
-
             yield return new WaitForSeconds(interval);
         }
 
-        // 最後は表示
         SetVisualChildrenActive(true);
-
         invincible = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!initialized) return;
+        if (!gameplayEnabled) return;
+        if (other == null) return;
+
+        Transform t = other.transform;
+        while (t != null && !t.name.StartsWith("Dashboard_")) t = t.parent;
+
+        if (t != null && t.name.StartsWith("Dashboard_"))
+        {
+            StartForcedZBurst();
+            return;
+        }
+
+        if (groundStreamer.TryGetFoodDef(other.gameObject, out var info))
+        {
+            if (playerImage != null)
+                playerImage.PlayPickupStretch();
+
+            int heal = Mathf.Max(0, info.healAmount);
+
+            switch (info.attribute)
+            {
+                case GroundStreamer.FoodAttribute.Thunder:
+                    if (CurrentHP < maxHP)
+                        CurrentHP = Mathf.Min(maxHP, CurrentHP + heal);
+
+                    if (clickShootFromCenter != null)
+                        clickShootFromCenter.enableThunder = true;
+                    break;
+
+                case GroundStreamer.FoodAttribute.Ice:
+                    if (CurrentHP < maxHP)
+                        CurrentHP = Mathf.Min(maxHP, CurrentHP + heal);
+
+                    if (clickShootFromCenter != null)
+                        clickShootFromCenter.enableFreezeOnHit = true;
+                    break;
+
+                case GroundStreamer.FoodAttribute.Gold:
+                    CurrentHP = maxHP * 2;
+                    break;
+
+                case GroundStreamer.FoodAttribute.None:
+                default:
+                    if (CurrentHP < maxHP)
+                        CurrentHP = Mathf.Min(maxHP, CurrentHP + heal);
+                    break;
+            }
+
+            fatigue = 0;
+            AddBodyKeyDelta(info.addWeight);
+
+            AudioManager.Instance.PlaySE("tap1");
+            AudioManager.Instance.PlaySE("heal");
+
+            groundStreamer.ConsumeFood(other.gameObject);
+        }
+    }
+
+    public void AddBodyKeyAnimated(float add, float seconds)
+    {
+        if (!initialized) return;
+
+        float baseValue = bodyKeyAnimating ? bodyKeyTarget : currentBodyKey;
+        float to = Mathf.Clamp(baseValue + add, 0f, 100f);
+        SetBodyKey(to, seconds);
     }
 }

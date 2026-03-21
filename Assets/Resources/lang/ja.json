@@ -378,6 +378,7 @@
 
     { "key": "haraibako_DropSpeech_10", "value": "うーん、難しいよね\fまずはアイテムを長押してみて" },
     { "key": "haraibako_DropSpeech_100", "value": "うーん、、、" },
-    { "key": "", "value": "" }
+
+    { "key": "moveGame_purpose_m", "value": "残り:{0}m" }
   ]
 }

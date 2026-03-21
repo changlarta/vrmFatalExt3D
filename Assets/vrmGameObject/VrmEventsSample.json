@@ -48,11 +48,11 @@
     {
       "eventKey": "moving_jogging2",
       "currentAnimationKey": "jogging",
-      "expressionPreset": "Tired",
+      "expressionPreset": "joggingTired",
       "eyeContact": false,
-      "enableBlink": true,
+      "enableBlink": false,
       "showBlush": true,
-      "enableMouthLoop": true
+      "enableMouthLoop": false
     },
     {
       "eventKey": "moving_fly1",

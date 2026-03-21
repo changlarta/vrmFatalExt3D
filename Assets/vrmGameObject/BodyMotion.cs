@@ -7,6 +7,7 @@ using UnityEngine.Animations;
 public sealed class BodyMotion : IDisposable
 {
     private bool _refCaptured;
+    private Animator _capturedAnimator;
 
     private BodyHandles _boundHandles;
 
@@ -18,6 +19,7 @@ public sealed class BodyMotion : IDisposable
     private float _refLegLengthL = 0f;
     private float _refLegLengthR = 0f;
     private Vector3 _refBodyRootLocalPos;
+    private Vector3 _refBodyRootLocalScale = Vector3.one;
 
     // current params (0..1)
     private float _bodyAmount;
@@ -34,15 +36,29 @@ public sealed class BodyMotion : IDisposable
     public bool TryCaptureReferences(Animator animator, Transform bodyRoot, out RigBones bones)
     {
         bones = default;
+
         if (!animator || animator.avatar == null || !animator.isHuman) return false;
         if (bodyRoot == null) return false;
 
+        // 同じ対象なら再キャプチャしない
+        if (HasCapturedReferencesFor(animator, bodyRoot))
+        {
+            bones = Bones;
+            return true;
+        }
+
+        // 以前の対象があるなら、一度きれいに戻してから切り替える
+        if (_refCaptured)
+        {
+            ReleaseReferences();
+        }
+
+        _capturedAnimator = animator;
         _bodyRootRef = bodyRoot;
 
         var hipsT = animator.GetBoneTransform(HumanBodyBones.Hips);
         var headT = animator.GetBoneTransform(HumanBodyBones.Head);
         var neckT = animator.GetBoneTransform(HumanBodyBones.Neck);
-        var spineT = animator.GetBoneTransform(HumanBodyBones.Spine);
         var chestT = animator.GetBoneTransform(HumanBodyBones.Chest);
         var upperChestT = animator.GetBoneTransform(HumanBodyBones.UpperChest);
 
@@ -101,10 +117,14 @@ public sealed class BodyMotion : IDisposable
 
         if (bones.Core.Hips.T != null && bones.Left.Ankle.T != null)
             _refLegLengthL = Vector3.Distance(bones.Core.Hips.T.position, bones.Left.Ankle.T.position);
+
         if (bones.Core.Hips.T != null && bones.Right.Ankle.T != null)
             _refLegLengthR = Vector3.Distance(bones.Core.Hips.T.position, bones.Right.Ankle.T.position);
 
         _refBodyRootLocalPos = bodyRoot.localPosition;
+        _refBodyRootLocalScale = bodyRoot.localScale;
+
+        _refCaptured = true;
         return true;
     }
 
@@ -115,24 +135,7 @@ public sealed class BodyMotion : IDisposable
     /// </summary>
     public bool TryCreateJob(Animator animator, Transform bodyRoot, out RotationScaleJobRef job)
     {
-        if (!_refCaptured)
-        {
-            if (!SetupRotationScaleJobAndCaptureRefs(animator, bodyRoot, out job))
-            {
-                return false;
-            }
-            _refCaptured = true;
-            return true;
-        }
-
-        _bodyRootRef = bodyRoot != null ? bodyRoot : _bodyRootRef;
-
-        job = RotationScaleJobRef.Create(
-            _boundHandles,
-            _bodyAmount,
-            _faceAmount
-        );
-        return true;
+        return SetupRotationScaleJobAndCaptureRefs(animator, bodyRoot, out job);
     }
 
     /// <summary>既存ジョブデータに Body/Face のパラメータを反映する。</summary>
@@ -145,6 +148,8 @@ public sealed class BodyMotion : IDisposable
     /// <summary>体型スケールと root Y 補正を適用</summary>
     public void ApplyScalesAndPositions(float height01, float bodyKey01, Transform bodyRoot)
     {
+        if (!_refCaptured) return;
+
         var b = Bones;
         float height = height01;
         float body = bodyKey01;
@@ -234,8 +239,13 @@ public sealed class BodyMotion : IDisposable
     private bool SetupRotationScaleJobAndCaptureRefs(Animator animator, Transform bodyRoot, out RotationScaleJobRef job)
     {
         job = default;
+
         if (animator == null || animator.avatar == null || !animator.isHuman) return false;
         if (bodyRoot == null) return false;
+
+        // 参照値はここで上書きしない。TryCaptureReferences 側に一元化する
+        if (!TryCaptureReferences(animator, bodyRoot, out _))
+            return false;
 
         _bodyRootRef = bodyRoot;
 
@@ -296,19 +306,82 @@ public sealed class BodyMotion : IDisposable
             }
         };
 
-        _refBodyRootLocalPos = bodyRoot.localPosition;
-
         job = RotationScaleJobRef.Create(
             _boundHandles,
             _bodyAmount,
             _faceAmount
         );
+
         return true;
+    }
+
+    public bool HasCapturedReferencesFor(Animator animator, Transform bodyRoot)
+    {
+        return _refCaptured &&
+               _capturedAnimator == animator &&
+               _bodyRootRef == bodyRoot;
+    }
+
+    public void RestoreReferencePose()
+    {
+        if (!_refCaptured) return;
+
+        RestoreBone(Bones.Core.Hips);
+        RestoreBone(Bones.Core.Head);
+        RestoreBone(Bones.Core.Neck);
+        RestoreBone(Bones.Core.Chest);
+        RestoreBone(Bones.Core.UpperChest);
+
+        RestoreBone(Bones.Left.Shoulder);
+        RestoreBone(Bones.Left.UpperArm);
+        RestoreBone(Bones.Left.LowerArm);
+        RestoreBone(Bones.Left.Hand);
+        RestoreBone(Bones.Left.UpperLeg);
+        RestoreBone(Bones.Left.LowerLeg);
+        RestoreBone(Bones.Left.Foot);
+
+        RestoreBone(Bones.Right.Shoulder);
+        RestoreBone(Bones.Right.UpperArm);
+        RestoreBone(Bones.Right.LowerArm);
+        RestoreBone(Bones.Right.Hand);
+        RestoreBone(Bones.Right.UpperLeg);
+        RestoreBone(Bones.Right.LowerLeg);
+        RestoreBone(Bones.Right.Foot);
+
+        if (_bodyRootRef != null)
+        {
+            _bodyRootRef.localPosition = _refBodyRootLocalPos;
+            _bodyRootRef.localScale = _refBodyRootLocalScale;
+        }
+    }
+
+    public void ReleaseReferences()
+    {
+        RestoreReferencePose();
+
+        _refCaptured = false;
+        _capturedAnimator = null;
+        _bodyRootRef = null;
+        _boundHandles = default;
+        Bones = default;
+
+        _refLegLengthL = 0f;
+        _refLegLengthR = 0f;
+        _refBodyRootLocalPos = Vector3.zero;
+        _refBodyRootLocalScale = Vector3.one;
+    }
+
+    private static void RestoreBone(BoneNode node)
+    {
+        if (node.T == null) return;
+
+        node.T.localPosition = node.refLocalPos;
+        node.T.localScale = node.refScale;
     }
 
     public void Dispose()
     {
-        // NativeArray などは使わなくなったので破棄処理も不要
+        ReleaseReferences();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -367,7 +440,7 @@ public sealed class BodyMotion : IDisposable
             {
                 T = t,
                 refScale = t != null ? t.localScale : Vector3.one,
-                refLocalPos = t != null ? t.localPosition : Vector3.one
+                refLocalPos = t != null ? t.localPosition : Vector3.zero
             };
         }
     }
@@ -432,7 +505,7 @@ public sealed class BodyMotion : IDisposable
         {
             // ここからは BodyAmount / faceAmount を使った追加回転のみ
 
-            if (_bound.Core.Hips.IsValid(stream))
+            if (_bound.Core.UpperChest.IsValid(stream))
             {
                 var rUp = _bound.Core.UpperChest.GetLocalRotation(stream);
                 var qAdd = Quaternion.Euler(7f * BodyAmount, 0f, 0f);

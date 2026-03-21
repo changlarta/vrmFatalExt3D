@@ -58,6 +58,7 @@
     { "key": "closeDialogDescription", "value": "Quit the game?" },
     { "key": "closeDialogCancel", "value": "Cancel" },
     { "key": "closeDialogYes", "value": "Yes" },
+    {"key": "closeDialogRetry", "value": "Retry" },
 
     { "key": "settingSelectVRM", "value": "Select\nfrom VRM file" },
     { "key": "settingStart", "value": "Start" },
@@ -593,6 +594,23 @@
       "value": "Fuu…\fHehe…\fI ended up like this."
     },
     { "key": "haraibako_DropSpeech_10", "value": "Hmm, this is tricky, huh? \fFirst, try long-pressing the item." },
-    { "key": "haraibako_DropSpeech_100", "value": "Hmm" }
+    { "key": "haraibako_DropSpeech_100", "value": "Hmm" },
+
+    { "key": "moveGame_purpose_m", "value": "残り:{0}m" },
+    { "key": "moveGameLoadingTextPlayer", "value": "プレイヤーを読み込み中" },
+    { "key": "moveGameLoadingTextEnemy", "value": "敵を読み込み中" },
+    { "key": "moveGameStartText", "value": "はじめる" },
+    { "key": "moveGameRetryButton", "value": "{0}mからリスタート" },
+
+    { "key": "moveGame1", "value": "{enm1}テストテストテストテストテストテスト{enm2}テストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "moveGame2", "value": "{enm2}テストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "moveGame3", "value": "{enm3}テストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "moveGame4", "value": "{enm4}テストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "moveGame5", "value": "{enm5}テストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "moveGame6", "value": "{her}テストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテストテスト" },
+    { "key": "Common_MuteSpeech", "value": "{enm1}はい" },
+    { "key": "shutupButton", "value": "黙れ!" },
+
+    { "key": "", "value": "" }
   ]
 }
