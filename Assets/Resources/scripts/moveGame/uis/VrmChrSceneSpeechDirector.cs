@@ -27,187 +27,71 @@ public class VrmChrSceneSpeechDirector : MonoBehaviour
     [SerializeField] private string muteSpeechKey = "Common_MuteSpeech";
     [SerializeField] private float muteBlockSeconds = 30f;
 
-    [Header("Debug")]
-    [SerializeField] private List<string> debugSpeechKeys = new List<string>();
+    private readonly HashSet<int> spokenBossIds = new HashSet<int>();
 
-    private SpeechCharacterType speechCharacterType = SpeechCharacterType.None;
-
-    private readonly HashSet<int> spokenFoodIds = new HashSet<int>();
-    private readonly HashSet<int> spokenDropIds = new HashSet<int>();
-    private readonly HashSet<int> spokenWeightIds = new HashSet<int>();
-
-    private bool cursorInitialized;
-    private int cursorWeight;
-    private bool isReady;
-
+    private bool hasSpokenStart;
     private float muteUntilUnscaledTime;
-    private int debugSpeechIndex;
 
     private void Awake()
     {
         Instance = this;
-        dialog.MuteRequested += MuteCurrentSpeech;
+
+        if (dialog != null)
+        {
+            dialog.MuteRequested += MuteCurrentSpeech;
+        }
     }
 
     private void OnDestroy()
     {
-        dialog.MuteRequested -= MuteCurrentSpeech;
+        if (dialog != null)
+        {
+            dialog.MuteRequested -= MuteCurrentSpeech;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
-    private void Update()
+    public void ResetForNewGame()
     {
-        speechCharacterType = SweetGameVrmStore.speechType;
-
-        VrmChrSceneController scene = VrmChrSceneController.Instance;
-        if (scene == null || scene.vrmToController == null)
-        {
-            return;
-        }
-
-        if (!isReady)
-        {
-            isReady = scene.vrmToController.IsReady;
-            if (!isReady)
-            {
-                return;
-            }
-
-            cursorWeight = Mathf.RoundToInt(scene.vrmToController.bodyKey);
-            cursorInitialized = true;
-
-            if (speechCharacterType != SpeechCharacterType.None)
-            {
-                TryBeginSpeech(speechCharacterType + "_Start", false, string.Empty);
-            }
-
-            return;
-        }
-
-        SetWeightSpeech(scene.vrmToController.bodyKey);
+        hasSpokenStart = false;
+        spokenBossIds.Clear();
     }
 
-    public void UpdateSpeechCharacterType(SpeechCharacterType type)
+    public void BeginStartSpeech()
     {
-        if (type == SpeechCharacterType.None)
+        if (hasSpokenStart)
         {
             return;
         }
 
-        speechCharacterType = type;
+        hasSpokenStart = true;
+        TryBeginSpeech("Start", false, string.Empty);
     }
 
-    public void SetWeightSpeech(float weight)
+    public void setBossSpeech(int id)
     {
-        if (speechCharacterType == SpeechCharacterType.None)
+        if (!spokenBossIds.Add(id))
         {
             return;
         }
 
-        if (dialog.IsShowing)
-        {
-            return;
-        }
-
-        int current = Mathf.RoundToInt(weight);
-
-        if (!cursorInitialized)
-        {
-            cursorWeight = current;
-            cursorInitialized = true;
-            return;
-        }
-
-        if (current == cursorWeight)
-        {
-            return;
-        }
-
-        cursorWeight += current > cursorWeight ? 1 : -1;
-
-        if (cursorWeight < 1 || cursorWeight > 100)
-        {
-            return;
-        }
-
-        if (!spokenWeightIds.Add(cursorWeight))
-        {
-            return;
-        }
-
-        TryBeginSpeech(speechCharacterType + "_WeightSpeech_" + cursorWeight, false, string.Empty);
+        TryBeginSpeech("BossSpeech_" + id, true, string.Empty);
     }
 
-    public void setFoodSpeech(int id)
+    public void setFatigueSpeech()
     {
-        if (speechCharacterType == SpeechCharacterType.None)
-        {
-            return;
-        }
-
-        if (dialog.IsShowing)
-        {
-            return;
-        }
-
-        if (!spokenFoodIds.Add(id))
-        {
-            return;
-        }
-
-        TryBeginSpeech(speechCharacterType + "_FoodSpeech_" + id, false, string.Empty);
+        int id = UnityEngine.Random.Range(1, 3);
+        TryBeginSpeech("FatigueSpeech_" + id, true, string.Empty);
     }
 
-    public void setDropSpeech(int id)
-    {
-        if (speechCharacterType == SpeechCharacterType.None)
-        {
-            return;
-        }
-
-        if (dialog.IsShowing)
-        {
-            return;
-        }
-
-        if (!spokenDropIds.Add(id))
-        {
-            return;
-        }
-
-        TryBeginSpeech(speechCharacterType + "_DropSpeech_" + id, false, string.Empty);
-    }
-
-    public void DebugPlayNextSpeech()
-    {
-        if (debugSpeechKeys.Count <= 0)
-        {
-            return;
-        }
-
-        if (debugSpeechIndex >= debugSpeechKeys.Count)
-        {
-            debugSpeechIndex = 0;
-        }
-
-        string key = debugSpeechKeys[debugSpeechIndex];
-        debugSpeechIndex++;
-
-        if (debugSpeechIndex >= debugSpeechKeys.Count)
-        {
-            debugSpeechIndex = 0;
-        }
-
-        TryBeginSpeech(key, true, string.Empty);
-    }
-
-    public void ResetDebugSpeechIndex()
-    {
-        debugSpeechIndex = 0;
-    }
 
     public void MuteCurrentSpeech()
     {
-        if (!dialog.IsShowing)
+        if (dialog == null || !dialog.IsShowing)
         {
             return;
         }
@@ -234,7 +118,6 @@ public class VrmChrSceneSpeechDirector : MonoBehaviour
         }
 
         List<AutoPagedSceneDialog.DialogPage> sections = BuildDialogSections(raw, string.Empty, false);
-
         if (sections.Count <= 0)
         {
             dialog.CloseNow();
@@ -255,6 +138,11 @@ public class VrmChrSceneSpeechDirector : MonoBehaviour
 
     private bool TryBeginSpeech(string key, bool allowInterruptCurrentDialog, string defaultProfileName)
     {
+        if (dialog == null)
+        {
+            return false;
+        }
+
         if (!allowInterruptCurrentDialog && dialog.IsShowing)
         {
             return false;
@@ -312,7 +200,6 @@ public class VrmChrSceneSpeechDirector : MonoBehaviour
         }
 
         AppendSectionIfNeeded(sections, builder, currentProfileName, skipMutedSections);
-
         return sections;
     }
 

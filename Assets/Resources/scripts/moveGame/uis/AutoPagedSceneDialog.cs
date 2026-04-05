@@ -204,7 +204,7 @@ public class AutoPagedSceneDialog : MonoBehaviour
                 motionVisual.gameObject.SetActive(true);
             }
 
-            motionVisual.Play(page.motionType);
+            motionVisual.Play(page.profileName, page.motionType);
             muteButton.gameObject.SetActive(page.showMuteButton);
             return;
         }

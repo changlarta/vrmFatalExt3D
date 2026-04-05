@@ -143,6 +143,18 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         SetVisualChildrenActive(visible);
     }
 
+    public IEnumerator CoReloadBodyVariantForTitle(BodyVariant bodyVariant)
+    {
+        SetCharacterVisible(true);
+        yield return null;
+        ctr1.blushValue = 0.5f;
+        ctr1.meshPullEnabled = false;
+        ctr1.ReloadFromBytes(character.bytes, bodyVariant, 100, ctr1.bodyKey, 30, 0.2f);
+
+        while (!ctr1.IsReady) yield return null;
+    }
+
+
     public void SetTransformForTitle(Vector3 position, Quaternion rotation)
     {
         if (vrmGameObject == null) return;
@@ -506,6 +518,8 @@ public sealed class PlayerController : MonoBehaviour, IDamageable
         {
             fatigue = 100f;
             exhausted = true;
+
+            VrmChrSceneSpeechDirector.Instance.setFatigueSpeech();
 
             moveDir = Vector3.zero;
             dashRequested = false;

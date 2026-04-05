@@ -6,23 +6,28 @@ using UnityEngine;
 public sealed class HeavyEnemyController : MonoBehaviour
 {
     [Header("VRM (TEMPLATE ONLY: Reload is called once by controller)")]
-    [SerializeField] private TextAsset character;               // テンプレート用
-    [SerializeField] private GameObject vrmGameObject = null;   // VrmToControllerの付いたGO（無ければ無い）
+    [SerializeField] private TextAsset character;
+    [SerializeField] private GameObject vrmGameObject = null;
 
     [Header("BodyKey")]
     public float currentBodyKey = 60f;
 
-    [Header("Movement (XZ: keyが大きいほど遅い / 速度は1本)")]
-    [SerializeField] private float speedAtKey0 = 6.0f;    // currentBodyKey=0 のXZ速度
-    [SerializeField] private float speedAtKey100 = 1.5f;  // currentBodyKey=100 のXZ速度
+    [Header("Movement (constant chase speed)")]
+    [SerializeField] private float chaseSpeedXZ = 4.0f;
+    [SerializeField] private float chaseSpeedY = 6.0f;
     [SerializeField] private float rotateLerp = 12f;
 
-    private float stopDistanceXZ = 0.1f; // XZ停止距離
-    private float stopDistanceY = 0.1f;  // Y停止距離
+    private float stopDistanceXZ = 0.1f;
+    private float stopDistanceY = 0.1f;
 
-    [Header("Movement Y (independent)")]
-    [Tooltip("上下追跡の基準速度。上昇はkeyが0に近いほど速く(上限=この値)、下降はkeyが大きいほど速く(最大2倍)。")]
-    [SerializeField] private float yChaseSpeed = 10.0f;
+    [Header("Shoot")]
+    [Tooltip("弾Prefab（必須）")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private float shootInterval = 5.0f;
+    [SerializeField] private float bulletSpeed = 10.0f;
+    [SerializeField] private float bulletLifeSeconds = 3.0f;
+    [SerializeField] private int bulletDamage = 10;
+    [SerializeField] private Vector3 muzzleLocalOffset = new Vector3(0f, 0f, 0.5f);
 
     [Header("Transfer (player hit = no damage, transfer bodyKey)")]
     [SerializeField] private float transferSeconds = 0.35f;
@@ -30,8 +35,8 @@ public sealed class HeavyEnemyController : MonoBehaviour
 
     [Header("Fly Away After Transfer (演出は常に有効)")]
     [SerializeField] private float flyAwaySeconds = 1.2f;
-    [SerializeField] private float flyAwayForwardSpeed = 10f; // +Z方向
-    [SerializeField] private float flyAwayUpSpeed = 8f;       // +Y方向
+    [SerializeField] private float flyAwayForwardSpeed = 10f;
+    [SerializeField] private float flyAwayUpSpeed = 8f;
 
     private Vector3 baseScale = Vector3.one;
 
@@ -50,6 +55,7 @@ public sealed class HeavyEnemyController : MonoBehaviour
     private State state = State.Chase;
 
     private float flyAwayTimer = 0f;
+    private float shootTimer = 0f;
 
     private Camera playerCamera;
     private moveGameSceneCamera cameraController;
@@ -57,19 +63,15 @@ public sealed class HeavyEnemyController : MonoBehaviour
 
     private Coroutine scaleCo;
 
-    // =========================================================
-    // Public API (GroundStreamer が呼ぶ)
-    // =========================================================
     public void Bind(PlayerController player, GroundStreamer ground)
     {
-        currentBodyKey = UnityEngine.Random.Range(15f, 80f);
+        currentBodyKey = UnityEngine.Random.Range(10f, 40f);
         injectedPlayer = player;
         injectedGround = ground;
     }
 
     public void SetBodyKeyImmediate(float v)
     {
-        currentBodyKey = Mathf.Clamp(v, 15f, 100f);
         ApplyBodyKey(currentBodyKey);
     }
 
@@ -88,10 +90,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// テンプレート専用：controller が「1回だけ」呼ぶ。
-    /// ここで重いロード完了（IsReady）まで待てる。
-    /// </summary>
     public IEnumerator CoReloadVrmForTemplateOnce()
     {
         if (vrmGameObject == null) { Debug.LogError("[HeavyEnemyController] vrmGameObject is null."); yield break; }
@@ -100,7 +98,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
         ctr = vrmGameObject.GetComponent<VrmToController>();
         if (ctr == null) { Debug.LogError("[HeavyEnemyController] VrmToController missing on vrmGameObject."); yield break; }
 
-        // このミニゲームでは MeshPull を完全オフ（既に動作確認済みの止血）
         ctr.meshPullEnabled = false;
 
         ctr.blushValue = 0.5f;
@@ -109,9 +106,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
         while (!ctr.IsReady) yield return null;
     }
 
-    // =========================================================
-    // Unity
-    // =========================================================
     private void Awake()
     {
         enemy = GetComponent<Enemy>();
@@ -125,6 +119,7 @@ public sealed class HeavyEnemyController : MonoBehaviour
 
         state = State.Chase;
         flyAwayTimer = 0f;
+        shootTimer = 0f;
 
         playerCamera = Camera.main;
         cameraController = FindFirstObjectByType<moveGameSceneCamera>();
@@ -148,7 +143,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
 
     private void Update()
     {
-        // ★Enemy.HIDDEN_POS を廃止したので GroundStreamer.HIDDEN_POS を使う
         if (transform.position == GroundStreamer.HIDDEN_POS) return;
 
         if (state == State.FlyAway)
@@ -165,11 +159,13 @@ public sealed class HeavyEnemyController : MonoBehaviour
         var pTr = player.VrmTransform;
         if (pTr == null) return;
 
+        float dt = Time.deltaTime;
+
         Vector3 epos = transform.position;
         Vector3 ppos = pTr.position;
 
         // -------------------------
-        // XZ
+        // XZ追尾（currentBodyKeyに依存しない固定速度）
         // -------------------------
         Vector3 toXZ = ppos - epos;
         toXZ.y = 0f;
@@ -177,52 +173,49 @@ public sealed class HeavyEnemyController : MonoBehaviour
         float distXZ = toXZ.magnitude;
         Vector3 dirXZ = (distXZ > 1e-6f) ? (toXZ / distXZ) : Vector3.forward;
 
-        float tKey = Mathf.Clamp01(currentBodyKey / 100f);
-        float speedXZ = Mathf.Lerp(speedAtKey0, speedAtKey100, tKey);
-
-        bool moveXZ = (distXZ > stopDistanceXZ);
+        bool moveXZ = distXZ > stopDistanceXZ;
         if (moveXZ)
         {
-            epos += dirXZ * (speedXZ * Time.deltaTime);
+            float stepXZ = chaseSpeedXZ * dt;
+            float canMove = Mathf.Max(0f, distXZ - stopDistanceXZ);
+            if (stepXZ > canMove) stepXZ = canMove;
+
+            epos += dirXZ * stepXZ;
 
             Quaternion targetRot = Quaternion.LookRotation(dirXZ, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotateLerp * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotateLerp * dt);
         }
 
         // -------------------------
-        // Y（上昇/下降で速度が別）
+        // Y追尾（currentBodyKeyに依存しない固定速度）
         // -------------------------
         float dy = ppos.y - epos.y;
         bool moveY = Mathf.Abs(dy) > stopDistanceY;
 
         if (moveY)
         {
-            float upSpeed = yChaseSpeed * Mathf.Lerp(0.5f, 1.0f, 1.0f - tKey);
-            if (upSpeed > yChaseSpeed) upSpeed = yChaseSpeed;
-
-            float downSpeed = yChaseSpeed * Mathf.Lerp(1.0f, 2.0f, tKey);
-
-            float step = (dy > 0f) ? upSpeed : downSpeed;
-            epos.y = Mathf.MoveTowards(epos.y, ppos.y, step * Time.deltaTime);
+            epos.y = Mathf.MoveTowards(epos.y, ppos.y, chaseSpeedY * dt);
         }
 
         transform.position = epos;
 
         // -------------------------
-        // アニメ
+        // 射撃（5秒ごとに3発）
         // -------------------------
-        bool movingXZ2 = distXZ > 1e-6f;
-        bool movingY2 = Mathf.Abs(dy) > 1e-6f;
+        if (bulletPrefab != null)
+        {
+            shootTimer += dt;
+            if (shootTimer >= shootInterval)
+            {
+                shootTimer -= shootInterval;
+                FireTriple3D(pTr);
+            }
+        }
 
-        if (!movingXZ2 && !movingY2)
-        {
-            movingLogTimer = 0f;
-            ApplyIdleAnim();
-        }
-        else
-        {
-            ApplyMoveAnimByKey();
-        }
+        // -------------------------
+        // 常に飛行モーション
+        // -------------------------
+        ApplyFlyAnim();
 
         // -------------------------
         // Camera shake（XZ移動してる時だけ）
@@ -230,9 +223,9 @@ public sealed class HeavyEnemyController : MonoBehaviour
         if (playerCamera == null) playerCamera = Camera.main;
         if (cameraController == null) cameraController = FindFirstObjectByType<moveGameSceneCamera>();
 
-        if (movingXZ2)
+        if (moveXZ)
         {
-            movingLogTimer += Time.deltaTime;
+            movingLogTimer += dt;
             const float limit = 0.6f;
 
             if (movingLogTimer >= limit)
@@ -256,20 +249,67 @@ public sealed class HeavyEnemyController : MonoBehaviour
                 }
             }
         }
+        else
+        {
+            movingLogTimer = 0f;
+        }
     }
 
-    // =========================================================
-    // Fly Away（演出は常に維持）
-    // =========================================================
+    private void FireTriple3D(Transform target)
+    {
+        if (target == null) return;
+        if (bulletPrefab == null) return;
+
+        Vector3 origin = transform.TransformPoint(muzzleLocalOffset);
+
+        // 0°方向は必ずプレイヤー方向（3D）
+        Vector3 d = target.position - origin;
+        float dsq = d.sqrMagnitude;
+        if (dsq < 1e-8f) return;
+        d /= Mathf.Sqrt(dsq);
+
+        // d と直交する回転軸を作る
+        Vector3 up = Vector3.up;
+        Vector3 n = up - Vector3.Dot(up, d) * d;
+
+        if (n.sqrMagnitude < 1e-8f)
+        {
+            n = Vector3.forward - Vector3.Dot(Vector3.forward, d) * d;
+            if (n.sqrMagnitude < 1e-8f)
+            {
+                n = Vector3.right - Vector3.Dot(Vector3.right, d) * d;
+                if (n.sqrMagnitude < 1e-8f) return;
+            }
+        }
+        n.Normalize();
+
+        // 3WAY
+        float[] angles = { -15f, 0f, 15f };
+
+        for (int i = 0; i < angles.Length; i++)
+        {
+            Vector3 dir = Quaternion.AngleAxis(angles[i], n) * d;
+
+            GameObject b = Instantiate(
+                bulletPrefab,
+                origin,
+                Quaternion.LookRotation(dir, Vector3.up)
+            );
+            b.name = $"EnemyBullet_{Time.frameCount}_{i}";
+
+            var bullet = b.GetComponent<SimpleStraightBullet>();
+            if (bullet == null) bullet = b.AddComponent<SimpleStraightBullet>();
+            bullet.Initialize(dir, bulletSpeed, bulletLifeSeconds, bulletDamage);
+        }
+    }
+
     private void StartFlyAway()
     {
         state = State.FlyAway;
         flyAwayTimer = 0f;
 
         transform.rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
-
-        bool variant2 = (ctr.bodyKey > 25f);
-        ctr.ApplyEvent(variant2 ? "moving_fly2" : "moving_fly1");
+        ApplyFlyAnim();
     }
 
     private void TickFlyAway()
@@ -281,58 +321,32 @@ public sealed class HeavyEnemyController : MonoBehaviour
         p += Vector3.up * (flyAwayUpSpeed * Time.deltaTime);
         transform.position = p;
 
-        bool variant2 = (ctr.bodyKey > 25f);
-        ctr.ApplyEvent(variant2 ? "moving_fly2" : "moving_fly1");
+        ApplyFlyAnim();
 
         if (flyAwayTimer >= flyAwaySeconds)
         {
-            // ★Enemy.HIDDEN_POS を廃止したので GroundStreamer.HIDDEN_POS を使う
             transform.position = GroundStreamer.HIDDEN_POS;
 
             state = State.Chase;
             flyAwayTimer = 0f;
+            shootTimer = 0f;
 
             Disappeared?.Invoke(this);
         }
     }
 
-    // =========================================================
-    // Animation (ApplyEvent)
-    // =========================================================
-    private void ApplyMoveAnimByKey()
+    private void ApplyFlyAnim()
     {
+        if (ctr == null) return;
+
         bool variant2 = (ctr.bodyKey > 25f);
-
-        if (currentBodyKey >= 70f)
-        {
-            if (currentBodyKey < 85f)
-                ctr.ApplyEvent(variant2 ? "moving_jogging2" : "moving_jogging1");
-            else
-                ctr.ApplyEvent(variant2 ? "moving_walk2" : "moving_walk1");
-            return;
-        }
-
-        if (currentBodyKey <= 50f)
-        {
-            ctr.ApplyEvent(variant2 ? "moving_fly2" : "moving_fly1");
-        }
-        else
-        {
-            ctr.ApplyEvent(variant2 ? "moving_jogging2" : "moving_jogging1");
-        }
+        ctr.ApplyEvent(variant2 ? "moving_fly2" : "moving_fly1");
     }
 
-    private void ApplyIdleAnim()
-    {
-        bool variant2 = (ctr.bodyKey > 25f);
-        ctr.ApplyEvent(variant2 ? "moving_idol2" : "moving_idol1");
-    }
-
-    // =========================================================
-    // BodyKey -> VRM
-    // =========================================================
     private void ApplyBodyKey(float bodyKey)
     {
+        if (ctr == null) return;
+
         float v = Mathf.Clamp(bodyKey, 0f, 100f);
 
         ctr.bodyKey = v;
@@ -340,9 +354,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
         ctr.bustKey = 20f + 80f * (v / 100f);
     }
 
-    // =========================================================
-    // Transfer: player触れたら bodyKey を移す（ダメージ無し）
-    // =========================================================
     private void OnTriggerEnter(Collider other)
     {
         if (state != State.Chase) return;
@@ -390,9 +401,6 @@ public sealed class HeavyEnemyController : MonoBehaviour
         transferCo = null;
     }
 
-    // =========================================================
-    // Helpers
-    // =========================================================
     private PlayerController GetPlayerOrNull()
     {
         if (injectedPlayer != null) return injectedPlayer;

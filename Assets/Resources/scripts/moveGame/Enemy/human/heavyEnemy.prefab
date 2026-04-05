@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 485dcf16bd8a8044a8a53532f48af53d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHP: 20
+  maxHP: 50
   playRuntimeHitFx: 1
   playRuntimeDeathFx: 1
   isFrozen: 0
@@ -70,10 +70,15 @@ MonoBehaviour:
   character: {fileID: 4900000, guid: 7d64e50105e4720439435e4347b6cbb0, type: 3}
   vrmGameObject: {fileID: 2752754538960950649}
   currentBodyKey: 30
-  speedAtKey0: 8
-  speedAtKey100: 4
+  chaseSpeedXZ: 5
+  chaseSpeedY: 2
   rotateLerp: 12
-  yChaseSpeed: 2
+  bulletPrefab: {fileID: 342208323692340208, guid: 84c84ce6c29d3bf4dad792a892e41c22, type: 3}
+  shootInterval: 5
+  bulletSpeed: 10
+  bulletLifeSeconds: 3
+  bulletDamage: 10
+  muzzleLocalOffset: {x: 0, y: 0, z: 0.5}
   transferSeconds: 0.35
   transferCooldownSeconds: 0.5
   flyAwaySeconds: 2

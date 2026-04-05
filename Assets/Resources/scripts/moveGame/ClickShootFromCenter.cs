@@ -9,6 +9,9 @@ public class ClickShootFromCenter : MonoBehaviour
     public float lifetime = 5.0f;
     public float cubeSize = 0.2f;
 
+    [Header("Projectile Prefab")]
+    [SerializeField] private GameObject projectilePrefab;
+
     public PlayerController player;
 
     [Header("Hold fire")]
@@ -38,20 +41,15 @@ public class ClickShootFromCenter : MonoBehaviour
     [Tooltip("最大チャージ時の最初の1発サイズ倍率")]
     public float fullChargeSizeMul = 30.0f;
 
-    // ---- 弾属性 ----
     private enum ShotSize { Small, Medium, Large }
 
     private const int DAMAGE_SMALL = 1;
     private const int DAMAGE_MEDIUM = 5;
     private const int DAMAGE_LARGE = 10;
 
-    // -------------------------
-    // Freeze（氷）: 共存可
-    // -------------------------
     [Header("Freeze bullet")]
     public bool enableFreezeOnHit = true;
 
-    // 決め打ち（ユーザー指定）
     private const float FREEZE_SMALL = 2f;
     private const float FREEZE_MEDIUM = 10f;
     private const float FREEZE_LARGE = 10f;
@@ -59,15 +57,12 @@ public class ClickShootFromCenter : MonoBehaviour
     [Header("Freeze bullet color")]
     public Color freezeBulletColor = new Color(0.4f, 0.85f, 1.0f, 1.0f);
 
-    // -------------------------
-    // Thunder（雷）: 共存可
-    // -------------------------
     [Header("Thunder state")]
-    public bool enableThunder = false; // 状態フラグ（外部からON/OFF）
+    public bool enableThunder = false;
 
     [Header("Thunder bullet blink")]
-    [Min(0.1f)] public float thunderBlinkHz = 12f; // 点滅速度（Hz）
-    [Range(0f, 1f)] public float thunderBlinkDuty = 0.5f; // 0.5=半分表示/半分非表示
+    [Min(0.1f)] public float thunderBlinkHz = 12f;
+    [Range(0f, 1f)] public float thunderBlinkDuty = 0.5f;
 
     [Header("Thunder small homing")]
     [Tooltip("小弾が追尾する最大距離")]
@@ -102,21 +97,15 @@ public class ClickShootFromCenter : MonoBehaviour
     [Tooltip("雷の見た目色（雷球には色を付けないが、雷エフェクトの色は必要）")]
     public Color lightningColor = new Color(0.8f, 0.95f, 1.0f, 1.0f);
 
-    // -------------------------
-    // 内部
-    // -------------------------
     private struct Projectile
     {
         public Transform tr;
         public Vector3 vel;
         public float age;
-
-        public Renderer rend;  // 点滅用
+        public Renderer rend;
         public bool isThunder;
         public bool isFreeze;
-
         public ShotSize sizeType;
-
         public float homingRange;
         public LayerMask enemyMask;
         public bool homingTurnedOnce;
@@ -162,7 +151,6 @@ public class ClickShootFromCenter : MonoBehaviour
     {
         float dt = Time.deltaTime;
 
-        // ---- 発射元速度推定 ----
         if (inertiaSource != null && dt > 1e-6f)
         {
             Vector3 cur = inertiaSource.position;
@@ -179,7 +167,6 @@ public class ClickShootFromCenter : MonoBehaviour
         var fullChargeSecondsX = (1 + 0.5f * player.currentBodyKey / 100) * fullChargeSeconds;
         var halfChargeSecondsX = (1 + 0.5f * player.currentBodyKey / 100) * halfChargeSeconds;
 
-        // ---- チャージ：撃っていない間だけ蓄積 ----
         if (!mouseDown)
         {
             chargeTimer = Mathf.Min(fullChargeSecondsX, chargeTimer + dt);
@@ -230,7 +217,6 @@ public class ClickShootFromCenter : MonoBehaviour
             }
         }
 
-        // ---- 弾更新 ----
         for (int i = projectiles.Count - 1; i >= 0; i--)
         {
             Projectile p = projectiles[i];
@@ -241,44 +227,32 @@ public class ClickShootFromCenter : MonoBehaviour
                 continue;
             }
 
-            // 雷：点滅（表示ON/OFF）
             if (p.isThunder && p.rend != null)
             {
                 float phase = Mathf.Repeat(Time.time * thunderBlinkHz, 1f);
                 bool visible = phase < Mathf.Clamp01(thunderBlinkDuty);
-                // material色は変えない（要件）
                 p.rend.enabled = visible;
             }
 
-            // 雷 + 小：追尾（range内の最も近いEnemyへ）
-            // 小の雷弾：1秒後に、最寄り敵の方向へ「一度だけ」曲げる
             if (p.isThunder && p.sizeType == ShotSize.Small && !p.homingTurnedOnce && p.age >= 0.5f)
             {
                 Enemy target = FindNearestEnemy(p.tr.position, p.homingRange, p.enemyMask);
                 if (target != null)
                 {
-                    // ★ y込みの3D方向
                     Vector3 to = target.transform.position - p.tr.position;
                     float sq = to.sqrMagnitude;
                     if (sq > 1e-8f)
                     {
                         Vector3 dir3D = to / Mathf.Sqrt(sq);
-
-                        // 速度の大きさは維持（3D）
                         float spd = p.vel.magnitude;
                         if (spd < 1e-4f) spd = speed;
-
-                        // ★ 3Dで即差し替え（これ1回だけ）
                         p.vel = dir3D * spd;
                         p.homingTurnedOnce = true;
                     }
                 }
             }
 
-            // 移動
             p.tr.position += p.vel * dt;
-
-            // 見た目回転
             p.tr.Rotate(Vector3.right, spinXDegPerSec * dt, Space.Self);
             p.tr.Rotate(Vector3.up, spinYDegPerSec * dt, Space.Self);
 
@@ -301,15 +275,25 @@ public class ClickShootFromCenter : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null) return;
 
+        if (projectilePrefab == null)
+        {
+            Debug.LogError("[ClickShootFromCenter] projectilePrefab is null.");
+            return;
+        }
+
         Ray centerRay = cam.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f));
         Vector3 spawnPos = centerRay.GetPoint(spawnDistance);
 
         Ray clickRay = cam.ScreenPointToRay(Input.mousePosition);
         Vector3 dir = clickRay.direction.normalized;
 
-        GameObject proj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        GameObject proj = Instantiate(projectilePrefab);
         proj.transform.position = spawnPos;
-        proj.transform.localScale = Vector3.one * (cubeSize * sizeMul);
+        proj.transform.rotation = Quaternion.identity;
+
+        Vector3 prefabScale = projectilePrefab.transform.localScale;
+        float finalScale = cubeSize * sizeMul;
+        proj.transform.localScale = Vector3.Scale(prefabScale, Vector3.one * finalScale);
 
         int projectileLayer = LayerMask.NameToLayer(PROJECTILE_LAYER_NAME);
         if (projectileLayer < 0)
@@ -321,35 +305,33 @@ public class ClickShootFromCenter : MonoBehaviour
         }
         proj.layer = projectileLayer;
 
-        // Renderer取得（点滅用/氷色用）
-        var rend = proj.GetComponent<Renderer>();
+        Renderer[] childRenderers = proj.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < childRenderers.Length; i++)
+        {
+            childRenderers[i].gameObject.layer = projectileLayer;
+        }
+
+        var rend = proj.GetComponentInChildren<Renderer>(true);
 
         bool isFreeze = enableFreezeOnHit;
         bool isThunder = enableThunder;
 
-        // 氷：色変更（雷の色は無し。共存時は「氷色を優先」で固定）
         if (isFreeze && rend != null)
         {
             rend.material.color = freezeBulletColor;
         }
 
-        // 命中処理
-        var hit = proj.AddComponent<ProjectileHit>();
+        var hit = proj.GetComponent<ProjectileHit>();
+        if (hit == null) hit = proj.AddComponent<ProjectileHit>();
         hit.damage = damage;
         hit.sizeType = sizeType;
-
-        // 氷（決め打ち）
         hit.enableFreezeOnHit = isFreeze;
         hit.freezeSecondsSmall = FREEZE_SMALL;
         hit.freezeSecondsMedium = FREEZE_MEDIUM;
         hit.freezeSecondsLarge = FREEZE_LARGE;
-
-        // 雷
         hit.enableThunderOnHit = isThunder;
         hit.thunderBlinkHz = thunderBlinkHz;
         hit.thunderBlinkDuty = thunderBlinkDuty;
-
-        // 雷（中/大命中で雷を落とす）設定
         hit.lightningLifeSeconds = lightningLifeSeconds;
         hit.lightningWidth = lightningWidth;
         hit.lightningHeight = lightningHeight;
@@ -360,9 +342,11 @@ public class ClickShootFromCenter : MonoBehaviour
         hit.lightningColor = lightningColor;
 
         var col = proj.GetComponent<Collider>();
-        if (col != null) col.isTrigger = true;
+        if (col == null) col = proj.AddComponent<BoxCollider>();
+        col.isTrigger = true;
 
-        var rb = proj.AddComponent<Rigidbody>();
+        var rb = proj.GetComponent<Rigidbody>();
+        if (rb == null) rb = proj.AddComponent<Rigidbody>();
         rb.useGravity = false;
         rb.isKinematic = true;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
@@ -384,17 +368,12 @@ public class ClickShootFromCenter : MonoBehaviour
         });
     }
 
-    // -------------------------
-    // Enemy探索（最も近い）
-    // -------------------------
     private static Enemy FindNearestEnemy(Vector3 from, float range, LayerMask mask)
     {
         if (range <= 0f) return null;
 
         float bestSq = range * range;
         Enemy best = null;
-
-        // ★ Trigger も拾う
         Collider[] hits = Physics.OverlapSphere(from, range, mask, QueryTriggerInteraction.Collide);
 
         for (int i = 0; i < hits.Length; i++)
@@ -413,26 +392,17 @@ public class ClickShootFromCenter : MonoBehaviour
         return best;
     }
 
-    // ---------------------------------------------------------
-    // 弾の命中処理（同ファイル内）
-    // ---------------------------------------------------------
     private sealed class ProjectileHit : MonoBehaviour
     {
         public int damage;
         public ShotSize sizeType;
-
-        // 氷
         public bool enableFreezeOnHit;
         public float freezeSecondsSmall;
         public float freezeSecondsMedium;
         public float freezeSecondsLarge;
-
-        // 雷
         public bool enableThunderOnHit;
         public float thunderBlinkHz;
         public float thunderBlinkDuty;
-
-        // 雷落下（中/大）
         public float lightningLifeSeconds;
         public float lightningWidth;
         public float lightningHeight;
@@ -448,11 +418,8 @@ public class ClickShootFromCenter : MonoBehaviour
             if (enemy == null) return;
 
             Vector3 hitPoint = other.ClosestPoint(transform.position);
-
-            // 通常ダメージ
             enemy.TakeDamage(damage, hitPoint);
 
-            // 氷：サイズ別にフリーズ
             if (enableFreezeOnHit)
             {
                 float sec = 0f;
@@ -465,10 +432,8 @@ public class ClickShootFromCenter : MonoBehaviour
                 if (sec > 0f) enemy.FreezeForSeconds(sec);
             }
 
-            // 雷：中/大 で雷を落とす
             if (enableThunderOnHit && (sizeType == ShotSize.Medium || sizeType == ShotSize.Large))
             {
-                // 雷は hitPoint を中心に落とす（縦長）
                 int strikeDamage = damage * Mathf.Max(0, lightningExtraDamage);
                 AudioManager.Instance.PlaySE("thunder");
                 LightningStrike.Spawn(
@@ -484,7 +449,6 @@ public class ClickShootFromCenter : MonoBehaviour
                 );
             }
 
-            // Small だけ消える。Medium / Large は残す（貫通）
             if (sizeType == ShotSize.Small)
             {
                 Destroy(gameObject);
@@ -492,19 +456,13 @@ public class ClickShootFromCenter : MonoBehaviour
         }
     }
 
-    // ---------------------------------------------------------
-    // 雷（縦長の当たり判定 + Quad描画 + Shader）
-    // ---------------------------------------------------------
     private sealed class LightningStrike : MonoBehaviour
     {
         private int damage;
         private float life;
         private float age;
-
-        // 一度当てた敵には再ヒットしない
         private readonly HashSet<int> hitEnemyIds = new HashSet<int>(32);
 
-        // 生成
         public static void Spawn(
             Vector3 center,
             float width,
@@ -521,32 +479,29 @@ public class ClickShootFromCenter : MonoBehaviour
             depth = Mathf.Max(0.01f, depth);
             lifeSeconds = Mathf.Max(0.02f, lifeSeconds);
 
-            // ルート
             var root = new GameObject("LightningStrike");
             root.transform.position = new Vector3(center.x, 0f, center.z);
 
-            // 当たり判定（縦長Box）
             var box = root.AddComponent<BoxCollider>();
             box.isTrigger = true;
             box.size = new Vector3(width, height, depth);
-            box.center = new Vector3(0f, height * 0.5f, 0f); // 地面方向を想定して上に伸ばす
+            box.center = new Vector3(0f, height * 0.5f, 0f);
 
-            // クリック弾と干渉したくなければレイヤー指定（任意）
-            // root.layer = LayerMask.NameToLayer("Projectiles");
+            var rb = root.AddComponent<Rigidbody>();
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
-            // 見た目：Quad（縦長）
             var vis = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            vis.name = "LightningVisual";
-            Destroy(vis.GetComponent<Collider>());
+            vis.name = "Visual";
+            Object.Destroy(vis.GetComponent<Collider>());
             vis.transform.SetParent(root.transform, false);
             vis.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
             vis.transform.localScale = new Vector3(width, height, 1f);
 
-            // カメラに正面向け（簡易）：常にY軸回りだけカメラへ向ける
             var billboard = vis.AddComponent<LightningBillboard>();
             billboard.onlyYaw = true;
 
-            // マテリアル（Shaderが無いときは Unlit/Transparent へフォールバック）
             Shader sh = Shader.Find(shaderName);
             if (sh == null) sh = Shader.Find("Unlit/Transparent");
             var mr = vis.GetComponent<MeshRenderer>();
@@ -554,8 +509,6 @@ public class ClickShootFromCenter : MonoBehaviour
             {
                 var mat = new Material(sh);
                 mr.material = mat;
-
-                // 共通パラメータ（Shader側に無い場合は無視される）
                 mr.material.SetColor("_Color", color);
                 mr.material.SetFloat("_Intensity", intensity);
                 mr.material.SetFloat("_Flicker", 1.0f);
@@ -565,8 +518,6 @@ public class ClickShootFromCenter : MonoBehaviour
             strike.damage = damage;
             strike.life = lifeSeconds;
         }
-
-
 
         void Update()
         {

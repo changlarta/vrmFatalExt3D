@@ -379,6 +379,39 @@
     { "key": "haraibako_DropSpeech_10", "value": "うーん、難しいよね\fまずはアイテムを長押してみて" },
     { "key": "haraibako_DropSpeech_100", "value": "うーん、、、" },
 
-    { "key": "moveGame_purpose_m", "value": "残り:{0}m" }
+    { "key": "moveGame_purpose_m", "value": "残り:{0}m" },
+    { "key": "moveGameLoadingTextPlayer", "value": "プレイヤーを読み込み中" },
+    { "key": "moveGameLoadingTextEnemy", "value": "敵を読み込み中" },
+    { "key": "moveGameStartText", "value": "はじめる" },
+    { "key": "moveGameRetryButton", "value": "{0}mからリスタート" },
+    { "key": "moveGameContinueCountFormat", "value": "Continue: {0}" },
+    { "key": "moveGameClearTitle", "value": "CLEAR!" },
+    { "key": "moveGameClearContinueCount", "value": "Continue: {0}" },
+    { "key": "moveGameClearTime", "value": "Time: {0}" },
+
+
+    { "key": "Start", "value": "{her1}【ゲームルール】{her1}1000m先まで行けたら勝ちです{her1}【操作方法】{her1}クリックで攻撃\n[w][a][s][d]で移動\n[space]でジャンプ{enm1}分かりやすい!流石!" },
+    { "key": "BossSpeech_50", "value": "{her1}【ボス敵】{her1}50m毎にボス敵が出ます\n倒したら先に進めるようになります{enm4}ええ!?{enm5}私の可愛いぬらしたメラニンスポンジちゃんたちを倒すなんてとんでもない {enm3}:heart: :heart:" },
+    { "key": "BossSpeech_100", "value": "{her1}【飛行】{her1}[space]を押して飛び出した後、[space]を放すとしばらく滑空状態になります{her1}滑空状態で[space]を押すと、急降下します{enm3}つまりどういうこと{enm2}仕様が良く分からない!" },
+    { "key": "BossSpeech_150", "value": "{her1}【チャージ攻撃】{her1}一定時間弾を撃たないでいると{her1}ゲージが溜まりチャージショットを放てるようになります{her1}一部の敵には有効なので、余裕があるときは使い分けてみると良いかもしれません\n{enm2}つまり、チャージ攻撃なんて使わなくていいよ!" },
+    { "key": "BossSpeech_200", "value": "{her1}【コンテニュー】{her1}ゲームオーバーになると、チェックポイントからコンテニューすることが出来ます{her1}何回でもやり直せるので、気軽に色々試してみましょう{enm3}自殺名人になれる日も近いかもね!" },
+    { "key": "BossSpeech_300", "value": "{her1}【アイテム】{her1}落ちているアイテムを食べると体力が回復します。{her1}ただし、アイテムを取りすぎると体重が増えて機動力が落ちるので注意{enm5}私は太ってる方が可愛いと思うけどね{her1}…?そのままの私が可愛くないみたいな言い方じゃん…?{enm1}…?{her1}私が生成AIで作られたキャラクターだから可愛くないって言いたいんだ{her2}手書きで作られたイラストよりも価値が低いって言いたいんだ{her3}そのままの私じゃ誰からも愛されることはないって言いたいんだ{enm1}なんだこいつ…" },
+    { "key": "BossSpeech_350", "value": "{her1}【体重】{her1}回復アイテムを取ると一定量体重が増えます。{her1}移動が遅くなり飛べる距離も短くなりますが、防御力が増えます{enm3}デメリットだけじゃないんだね" },
+    { "key": "BossSpeech_400", "value": "{her1}【レアアイテム】{her1}時折、普段見かけない食べ物が落ちていることがあります{her1}食べると特別な効果があるので、積極的に取得してみると良いかもしれません{enm5}なんか怖いから食べなくても良いんじゃないか{enm3}食中毒になっちゃうかも" },
+    { "key": "BossSpeech_450", "value": "{her1}【ダッシュボード】{her1}地面に設置してある、加速用の板です{her1}素早く進めますが、道中の食べ物も取得してしまうので使用には注意{enm4}バリアフリーだ" },
+    { "key": "BossSpeech_500", "value": "{her1}【黄色いボス敵】{her1}強めのビームを放ってくるので注意{her1}発射までかなりの時間があるので、目の前に立って通常攻撃を連打しても良いかも{enm1}倒さないで、まわりであたふたしてても良いよ" },
+    { "key": "BossSpeech_550", "value": "{her1}【青いボス敵】{her1}四方八方に巨大な球を飛ばしてくるボス敵です{her1}通常の弾でダメージを与えるのは難しいので、チャージ攻撃で一気に倒そう{enm1}弾に当たったらどうなるのか試してみよう" },
+    { "key": "BossSpeech_600", "value": "{her1}【紫色のボス敵】{her1}地面に潜って攻撃してくるボス敵です{her1}手前側で出現させてしまうと弾を当てづらくなるので、可能な限り奥に出現させよう{enm2}追われてるとき、スポットライトに照らされてるみたいで気分がいいでしょ" },
+    { "key": "BossSpeech_650", "value": "{her1}【緑色のボス敵】{her1}巨大なボス敵です{her1}倒すのに時間がかかると大変になってしまうので、出来るだけ早く倒そう{enm1}すごくマイクラっぽい{enm5}パクリなのか" },
+    { "key": "BossSpeech_700", "value": "{her1}【敵のスポーン】{her1}時間経過か進んだ距離によって敵はスポーンします{her1}もし画面外に敵を出しても、奥から再度現れるだけなので注意{enm2}楽をするほど後で大変になる…{enm3}人生?" },
+    { "key": "BossSpeech_750", "value": "{her1}一通り仕様については話せたと思います{her1}ゲームについては分かってもらえたかな{enm2}もう終盤だし、これ以上ゲームについて知れても意味ないけどね{her1}意味あるけど{her1}また遊ぼうかなってなるかもしれないじゃん" },
+    { "key": "BossSpeech_800", "value": "{her1}あともう少しだから頑張ってね" },
+
+    { "key": "FatigueSpeech_1", "value": "{her2}ちょっと休憩" },
+    { "key": "FatigueSpeech_2", "value": "{her2}ふう…はぅ" },
+    { "key": "Common_MuteSpeech", "value": "{enm1}はい" },
+    { "key": "shutupButton", "value": "黙れ!" },
+
+    { "key": "", "value": "" }
   ]
 }

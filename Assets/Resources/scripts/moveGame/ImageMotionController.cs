@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +16,17 @@ public class ImageMotionController : BaseMeshEffect
         FifthRotateLoop
     }
 
+    [Serializable]
+    private class ProfileSpriteSet
+    {
+        public string profileName;
+        public Sprite firstSprite;
+        public Sprite secondSprite;
+        public Sprite thirdSprite;
+        public Sprite fourthSprite;
+        public Sprite fifthSprite;
+    }
+
     [Header("表示する画像の種類")]
     [SerializeField] private ImageType imageType = ImageType.FirstStill;
 
@@ -27,6 +39,9 @@ public class ImageMotionController : BaseMeshEffect
     [SerializeField] private Sprite thirdSprite;
     [SerializeField] private Sprite fourthSprite;
     [SerializeField] private Sprite fifthSprite;
+
+    [Header("profileNameごとの画像上書き")]
+    [SerializeField] private List<ProfileSpriteSet> profileSpriteSets = new List<ProfileSpriteSet>();
 
     [Header("画像ごとのYオフセット")]
     [SerializeField] private float firstYOffset = 0f;
@@ -75,6 +90,7 @@ public class ImageMotionController : BaseMeshEffect
     private float hideTransitionStartOffset;
     private float hideTransitionTargetOffset;
     private float currentHideOffset;
+    private string currentProfileName = string.Empty;
 
     private readonly List<UIVertex> workVerts = new List<UIVertex>();
 
@@ -123,18 +139,16 @@ public class ImageMotionController : BaseMeshEffect
         base.OnDisable();
     }
 
-    protected override void OnValidate()
-    {
-        base.OnValidate();
+    // protected void OnValidate()
+    // {
+    //     CacheComponents();
+    //     ApplySpriteOnlyForEditor();
 
-        CacheComponents();
-        ApplySpriteOnlyForEditor();
-
-        if (graphic != null)
-        {
-            graphic.SetVerticesDirty();
-        }
-    }
+    //     if (graphic != null)
+    //     {
+    //         graphic.SetVerticesDirty();
+    //     }
+    // }
 
     private void Update()
     {
@@ -164,10 +178,10 @@ public class ImageMotionController : BaseMeshEffect
 
         ApplyTransformAnimation();
 
-        if (imageType == ImageType.SecondBottomSwing && !isHide && graphic != null)
-        {
-            graphic.SetVerticesDirty();
-        }
+        // if (imageType == ImageType.SecondBottomSwing && !isHide && graphic != null)
+        // {
+        //     graphic.SetVerticesDirty();
+        // }
     }
 
     private void CacheComponents()
@@ -283,7 +297,7 @@ public class ImageMotionController : BaseMeshEffect
     {
         if (targetImage != null)
         {
-            targetImage.sprite = GetSpriteByType(imageType);
+            targetImage.sprite = GetSpriteByType(currentProfileName, imageType);
         }
     }
 
@@ -291,11 +305,71 @@ public class ImageMotionController : BaseMeshEffect
     {
         if (targetImage != null)
         {
-            targetImage.sprite = GetSpriteByType(type);
+            targetImage.sprite = GetSpriteByType(currentProfileName, type);
         }
     }
 
-    private Sprite GetSpriteByType(ImageType type)
+    private Sprite GetSpriteByType(string profileName, ImageType type)
+    {
+        ProfileSpriteSet profileSet = GetProfileSpriteSet(profileName);
+        Sprite profileSprite = GetProfileSpriteByType(profileSet, type);
+        if (profileSprite != null)
+        {
+            return profileSprite;
+        }
+
+        return GetDefaultSpriteByType(type);
+    }
+
+    private ProfileSpriteSet GetProfileSpriteSet(string profileName)
+    {
+        if (string.IsNullOrEmpty(profileName))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < profileSpriteSets.Count; i++)
+        {
+            ProfileSpriteSet set = profileSpriteSets[i];
+            if (set == null)
+            {
+                continue;
+            }
+
+            if (set.profileName == profileName)
+            {
+                return set;
+            }
+        }
+
+        return null;
+    }
+
+    private Sprite GetProfileSpriteByType(ProfileSpriteSet set, ImageType type)
+    {
+        if (set == null)
+        {
+            return null;
+        }
+
+        switch (type)
+        {
+            case ImageType.FirstStill:
+                return set.firstSprite;
+            case ImageType.SecondBottomSwing:
+                return set.secondSprite;
+            case ImageType.ThirdVerticalShake:
+                return set.thirdSprite;
+            case ImageType.FourthGrowLoop:
+                return set.fourthSprite;
+            case ImageType.FifthRotateLoop:
+                return set.fifthSprite;
+        }
+
+        return null;
+    }
+
+    private Sprite GetDefaultSpriteByType(ImageType type)
     {
         switch (type)
         {
@@ -346,16 +420,20 @@ public class ImageMotionController : BaseMeshEffect
                 ApplyFirstStill();
                 break;
             case ImageType.SecondBottomSwing:
-                ApplySecondBottomSwing();
+                // ApplySecondBottomSwing();
+                ApplyFirstStill();
                 break;
             case ImageType.ThirdVerticalShake:
-                ApplyThirdVerticalShake();
+                // ApplyThirdVerticalShake();
+                ApplyFirstStill();
                 break;
             case ImageType.FourthGrowLoop:
-                ApplyFourthGrowLoop();
+                // ApplyFourthGrowLoop();
+                ApplyFirstStill();
                 break;
             case ImageType.FifthRotateLoop:
-                ApplyFifthRotateLoop();
+                // ApplyFifthRotateLoop();
+                ApplyFirstStill();
                 break;
         }
     }
@@ -489,6 +567,13 @@ public class ImageMotionController : BaseMeshEffect
 
     public void Play(ImageType newType)
     {
+        Play(string.Empty, newType);
+    }
+
+    public void Play(string profileName, ImageType newType)
+    {
+        currentProfileName = profileName ?? string.Empty;
+
         if (!Application.isPlaying)
         {
             imageType = newType;

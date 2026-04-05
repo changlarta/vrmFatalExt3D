@@ -20,7 +20,8 @@ public sealed class moveGameSceneController : MonoBehaviour
         None,
         Title,
         Game,
-        GameOver
+        GameOver,
+        Clear
     }
 
     [Header("Required refs")]
@@ -47,10 +48,21 @@ public sealed class moveGameSceneController : MonoBehaviour
     [Header("Mode UI - Game Over")]
     [SerializeField] private List<ModeUIEntry> gameOverUIObjects = new List<ModeUIEntry>();
 
+    [Header("Mode UI - Clear")]
+    [SerializeField] private List<ModeUIEntry> clearUIObjects = new List<ModeUIEntry>();
+
     [SerializeField] private GameObject returnToTitleDialogObject;
 
     [Header("Loading Text")]
     [SerializeField] private GameObject loadingStatusTextObject;
+
+    [Header("Game Over")]
+    [SerializeField] private MoveGameContinueCountView continueCountView;
+
+    [Header("Clear")]
+    [SerializeField] private TextMeshProUGUI clearTitleTmp;
+    [SerializeField] private TextMeshProUGUI clearContinueCountTmp;
+    [SerializeField] private TextMeshProUGUI clearTimeTmp;
 
     private TextMeshProUGUI loadingStatusTmp;
 
@@ -59,7 +71,12 @@ public sealed class moveGameSceneController : MonoBehaviour
     private bool isLoading = false;
     private bool _isTransitioning = false;
 
+    private int continueCount = 0;
+    private float playTimerSeconds = 0f;
+
     private SceneMode mode = SceneMode.None;
+
+    private Coroutine titleBodyVariantReloadCoroutine;
 
     private void Awake()
     {
@@ -145,7 +162,10 @@ public sealed class moveGameSceneController : MonoBehaviour
         if (mode != SceneMode.Game) return;
         if (!booted) return;
 
+        playTimerSeconds += Time.deltaTime;
+
         SupplyWorldBounds();
+        CheckClearReached();
     }
 
     private void PrepareTitlePresentationBeforeHeavyLoad()
@@ -172,6 +192,11 @@ public sealed class moveGameSceneController : MonoBehaviour
         player.SetGameplayEnabled(false);
         player.SetCharacterVisible(false);
 
+        continueCount = 0;
+        playTimerSeconds = 0f;
+        continueCountView?.SetContinueCount(continueCount);
+        RefreshClearTexts();
+
         RefreshModeUI();
     }
 
@@ -192,7 +217,23 @@ public sealed class moveGameSceneController : MonoBehaviour
         if (isLoading) return;
         if (mode != SceneMode.Title) return;
 
+        continueCount = 0;
+        playTimerSeconds = 0f;
+        continueCountView?.SetContinueCount(continueCount);
+        RefreshClearTexts();
+
+        VrmChrSceneSpeechDirector speechDirector = VrmChrSceneSpeechDirector.Instance;
+        if (speechDirector != null)
+        {
+            speechDirector.ResetForNewGame();
+        }
+
         StartGameAtLogicalTile(0);
+
+        if (speechDirector != null)
+        {
+            speechDirector.BeginStartSpeech();
+        }
     }
 
     private void StartGameAtLogicalTile(int logicalTileIndex)
@@ -240,6 +281,11 @@ public sealed class moveGameSceneController : MonoBehaviour
         mode = SceneMode.Title;
         isLoading = false;
 
+        continueCount = 0;
+        playTimerSeconds = 0f;
+        continueCountView?.SetContinueCount(continueCount);
+        RefreshClearTexts();
+
         RefreshModeUI();
     }
 
@@ -247,9 +293,43 @@ public sealed class moveGameSceneController : MonoBehaviour
     {
         if (mode != SceneMode.Game) return;
 
+        if (groundStreamer != null && groundStreamer.GetLogicalTileIndex() >= groundStreamer.GetClearTileIndex())
+        {
+            EnterClear();
+            return;
+        }
+
         booted = false;
         mode = SceneMode.GameOver;
 
+        continueCountView?.SetContinueCount(continueCount);
+
+        CloseReturnToTitleDialog();
+        RefreshModeUI();
+    }
+
+    private void CheckClearReached()
+    {
+        if (mode != SceneMode.Game) return;
+        if (groundStreamer == null) return;
+        if (groundStreamer.GetLogicalTileIndex() < groundStreamer.GetClearTileIndex()) return;
+
+        EnterClear();
+    }
+
+    private void EnterClear()
+    {
+        if (mode != SceneMode.Game) return;
+
+        booted = false;
+        mode = SceneMode.Clear;
+
+        if (player != null)
+        {
+            player.SetGameplayEnabled(false);
+        }
+
+        RefreshClearTexts();
         CloseReturnToTitleDialog();
         RefreshModeUI();
     }
@@ -260,11 +340,13 @@ public sealed class moveGameSceneController : MonoBehaviour
         bool showTitleReady = (mode == SceneMode.Title) && !isLoading && loaded;
         bool showGame = (mode == SceneMode.Game);
         bool showGameOver = (mode == SceneMode.GameOver);
+        bool showClear = (mode == SceneMode.Clear);
 
         SetObjectsActive(titleLoadingUIObjects, showTitleLoading);
         SetObjectsActive(titleReadyUIObjects, showTitleReady);
         SetObjectsActive(gameModeUIObjects, showGame);
         SetObjectsActive(gameOverUIObjects, showGameOver);
+        SetObjectsActive(clearUIObjects, showClear);
 
         if (loadingIndicatorObject != null)
         {
@@ -300,9 +382,63 @@ public sealed class moveGameSceneController : MonoBehaviour
          );
     }
 
+    private void RefreshClearTexts()
+    {
+        if (clearTitleTmp != null)
+        {
+            clearTitleTmp.text = GetRequiredLocalized("moveGameClearTitle");
+        }
+
+        if (clearContinueCountTmp != null)
+        {
+            clearContinueCountTmp.text = string.Format(
+                GetRequiredLocalized("moveGameClearContinueCount"),
+                continueCount
+            );
+        }
+
+        if (clearTimeTmp != null)
+        {
+            clearTimeTmp.text = string.Format(
+                GetRequiredLocalized("moveGameClearTime"),
+                FormatClock(playTimerSeconds)
+            );
+        }
+    }
+
+    private static string FormatClock(float seconds)
+    {
+        int totalSeconds = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        int minutes = totalSeconds / 60;
+        int remainSeconds = totalSeconds % 60;
+        return $"{minutes:00}:{remainSeconds:00}";
+    }
+
+    private static string GetRequiredLocalized(string key)
+    {
+        if (LocalizationManager.Instance == null)
+        {
+            Debug.LogError($"[moveGameSceneController] LocalizationManager.Instance is null. key={key}");
+            return string.Empty;
+        }
+
+        string text = LocalizationManager.Instance.Get(key);
+        if (string.IsNullOrEmpty(text) || text == key)
+        {
+            Debug.LogError($"[moveGameSceneController] Missing localization text. key={key}");
+        }
+
+        return text;
+    }
+
     public void ReloadGame()
     {
         if (mode != SceneMode.Game && mode != SceneMode.GameOver) return;
+
+        if (mode == SceneMode.GameOver)
+        {
+            continueCount++;
+        }
 
         int retryStartTile = groundStreamer.GetRetryRestartDistance();
 
@@ -312,6 +448,7 @@ public sealed class moveGameSceneController : MonoBehaviour
 
         AudioManager.Instance.PlayBGM("bgm5");
     }
+
     public IEnumerator LoadSceneMoveGame()
     {
         var ctr = player != null ? player.GetComponent<VrmToController>() : null;
@@ -360,10 +497,54 @@ public sealed class moveGameSceneController : MonoBehaviour
 
     public void OnTapReturnToTitleMode()
     {
-        if (mode != SceneMode.Game && mode != SceneMode.GameOver) return;
+        if (mode != SceneMode.Game && mode != SceneMode.GameOver && mode != SceneMode.Clear) return;
         AudioManager.Instance.PlayBGM("bgm4");
 
         CloseReturnToTitleDialog();
         ReturnToTitleMode();
+    }
+
+    public bool RequestTitleBodyVariantReload(BodyVariant bodyVariant)
+    {
+        if (!loaded) return false;
+        if (isLoading) return false;
+        if (mode != SceneMode.Title) return false;
+        if (player == null) return false;
+
+        if (titleBodyVariantReloadCoroutine != null)
+        {
+            StopCoroutine(titleBodyVariantReloadCoroutine);
+        }
+
+        titleBodyVariantReloadCoroutine = StartCoroutine(CoReloadTitlePlayerBodyVariant(bodyVariant));
+        return true;
+    }
+
+    private IEnumerator CoReloadTitlePlayerBodyVariant(BodyVariant bodyVariant)
+    {
+        var playerCtr = player.GetComponent<PlayerController>();
+        if (playerCtr == null)
+        {
+            Debug.LogError("[moveGameSceneController] PlayerController missing on player.");
+            yield break;
+        }
+
+        isLoading = true;
+        RefreshModeUI();
+
+        if (loadingStatusTmp != null)
+        {
+            loadingStatusTmp.text = LocalizationManager.Instance.Get("moveGameLoadingTextPlayer");
+        }
+
+        yield return null;
+        player.gameObject.SetActive(true);
+        yield return StartCoroutine(playerCtr.CoReloadBodyVariantForTitle(bodyVariant));
+        player.gameObject.SetActive(false);
+
+        isLoading = false;
+        RefreshModeUI();
+
+        titleBodyVariantReloadCoroutine = null;
     }
 }

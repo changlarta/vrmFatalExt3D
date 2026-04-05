@@ -47,6 +47,9 @@ public sealed class GroundStreamer : MonoBehaviour
     [Header("Blockade (every N tiles)")]
     [Min(1)] public int blockadeEveryTiles = 100;
 
+    [Header("Clear")]
+    [Min(1)] public int clearTileIndex = 1000;
+
     [Header("Boss prefabs (Phase 1 / Phase 2)")]
     public List<GameObject> bossPrefabsPhase1 = new List<GameObject>();
     public List<GameObject> bossPrefabsPhase2 = new List<GameObject>();
@@ -191,6 +194,21 @@ public sealed class GroundStreamer : MonoBehaviour
         if (logical < 0) logical = 0;
         if (logical > int.MaxValue) logical = int.MaxValue;
         return (int)logical;
+    }
+
+    public int GetClearTileIndex()
+    {
+        return Mathf.Max(1, clearTileIndex);
+    }
+
+    public int GetLastPlayableLogicalTileIndex()
+    {
+        return GetClearTileIndex() - 1;
+    }
+
+    private int GetLastPlayablePhysicalTileIndex()
+    {
+        return GetLastPlayableLogicalTileIndex() - startTileIndexPublic;
     }
 
     public int GetContinueStartTileIndex()
@@ -392,6 +410,11 @@ public sealed class GroundStreamer : MonoBehaviour
 
     public void Tick() => Tick(force: false);
 
+    private bool CanSpawnBlockadeAtPhysicalTile(int physicalTileIndex)
+    {
+        return GetLogicalTileIndexForPhysicalTile(physicalTileIndex) < GetClearTileIndex();
+    }
+
     private void Tick(bool force)
     {
         if (followTarget == null) return;
@@ -426,7 +449,7 @@ public sealed class GroundStreamer : MonoBehaviour
         if (!blockadeActive)
         {
             int wouldNeedMaxIdx = furthestIdxRaw + tilesAhead;
-            if (wouldNeedMaxIdx >= nextBlockadeIndex)
+            if (wouldNeedMaxIdx >= nextBlockadeIndex && CanSpawnBlockadeAtPhysicalTile(nextBlockadeIndex))
             {
                 blockadeActive = true;
                 blockadeSpawned = false;
@@ -449,6 +472,8 @@ public sealed class GroundStreamer : MonoBehaviour
         if (blockadeActive)
             maxKeepIdx = Mathf.Min(maxKeepIdx, nextBlockadeIndex);
 
+        maxKeepIdx = Mathf.Min(maxKeepIdx, GetLastPlayablePhysicalTileIndex());
+
         if (blockadeActive && blockadeMinFrozen)
             minKeepIdx = Mathf.Min(minKeepIdx, frozenMinKeepIdx);
 
@@ -470,6 +495,9 @@ public sealed class GroundStreamer : MonoBehaviour
 
                 float t = GetDifficultyT();
                 int logicalTile = GetLogicalTileIndexForPhysicalTile(i);
+                if (logicalTile >= GetClearTileIndex())
+                    continue;
+
                 float tEvery = Mathf.Clamp01(t / 0.8f);
                 int every = Mathf.Max(1, Mathf.FloorToInt(Mathf.Lerp(15f, 1f, tEvery)));
 
@@ -660,7 +688,9 @@ public sealed class GroundStreamer : MonoBehaviour
             $"Enemy_BossAdd_{blockadeTileIndex}"
         );
 
-        List<GameObject> bossList = IsBossPhase1ByLogicalTile(GetLogicalTileIndexForPhysicalTile(blockadeTileIndex))
+        int logicalTileIndex = GetLogicalTileIndexForPhysicalTile(blockadeTileIndex);
+
+        List<GameObject> bossList = IsBossPhase1ByLogicalTile(logicalTileIndex)
             ? bossPrefabsPhase1
             : bossPrefabsPhase2;
 
@@ -678,6 +708,11 @@ public sealed class GroundStreamer : MonoBehaviour
         if (bossEnemy != null) bossEnemy.MarkAsSpawned();
 
         currentBoss.name = $"Boss_{blockadeTileIndex}_{Time.frameCount}";
+
+        if (VrmChrSceneSpeechDirector.Instance != null)
+        {
+            VrmChrSceneSpeechDirector.Instance.setBossSpeech(logicalTileIndex);
+        }
     }
 
     private void RegisterEnemyIfNeeded(GameObject e)
