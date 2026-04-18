@@ -29,33 +29,33 @@ public class ShopSideBar : MonoBehaviour
     {
         new ShopEntry(0),
         new ShopEntry(0),
-        new ShopEntry(8000),
-        new ShopEntry(16000),
-        new ShopEntry(16000),
-        new ShopEntry(200000),
-        new ShopEntry(400000),
-        new ShopEntry(400000),
-        new ShopEntry(9999999),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
     };
 
     private readonly ShopEntry[] backgrounds = new ShopEntry[6]
     {
         new ShopEntry(0),
         new ShopEntry(0),
-        new ShopEntry(10000),
-        new ShopEntry(10000),
-        new ShopEntry(10000),
-        new ShopEntry(500000),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
+        new ShopEntry(0),
     };
 
     private readonly ShopEntry[] bgms = new ShopEntry[3]
     {
         new ShopEntry(0),
-        new ShopEntry(5000),
-        new ShopEntry(5000),
+        new ShopEntry(0),
+        new ShopEntry(0),
     };
 
-    private readonly ShopEntry openDev = new ShopEntry(999999);
+    private readonly ShopEntry openDev = new ShopEntry(0);
 
     private TextMeshProUGUI coinText;
 
